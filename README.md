@@ -18,10 +18,10 @@ Built with modern **C++20** and **Java 22**, this system achieves **5.06+ Millio
 The engine comes equipped with a Bloomberg-style real-time trading dashboard deployable to **Vercel** with zero backend configuration needed.
 
 ### Deploying to Vercel in 1-Click:
-1. Push this repository to your GitHub account: `https://github.com/Mudit-R/cpp-order-matching-engine`
-2. Go to [vercel.com](https://vercel.com) -> **Add New Project** -> Select your repository.
+1. Push this repository to your GitHub account: `https://github.com/Mudit-R/order-matching-engine`
+2. Go to [vercel.com](https://vercel.com) -> **Add New Project** -> Select `order-matching-engine`.
 3. Keep default settings (Vercel automatically detects `vercel.json`) and click **Deploy**.
-4. Your live high-performance trading visualizer will be active worldwide at `https://your-project.vercel.app`!
+4. Your live high-performance trading visualizer will be active worldwide at `https://order-matching-engine.vercel.app`!
 
 ---
 
