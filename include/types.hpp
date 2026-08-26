@@ -10,7 +10,8 @@
 namespace Engine {
 
 using OrderId = uint64_t;
-using Price = uint64_t;     // Stored in fixed-point cents / ticks to prevent floating-point errors (e.g. $150.25 -> 15025)
+using ClientId = uint32_t;
+using Price = uint64_t;     // Fixed-point (e.g. 195.00 -> 19500 ticks/cents)
 using Quantity = uint32_t;
 using Timestamp = uint64_t; // Nanoseconds since epoch
 
@@ -22,8 +23,16 @@ enum class Side : uint8_t {
 enum class OrderType : uint8_t {
     LIMIT = 0,
     MARKET = 1,
-    IOC = 2,  // Immediate-Or-Cancel
-    FOK = 3   // Fill-Or-Kill
+    IOC = 2,      // Immediate-Or-Cancel
+    FOK = 3,      // Fill-Or-Kill
+    POST_ONLY = 4 // Maker-Only (rejects if it would cross the spread and take liquidity)
+};
+
+enum class SelfTradePrevention : uint8_t {
+    NONE = 0,
+    CANCEL_TAKER = 1,  // Cancel the incoming crossing order
+    CANCEL_MAKER = 2,  // Cancel the resting resting maker order
+    CANCEL_BOTH = 3    // Cancel both orders
 };
 
 enum class OrderAction : uint8_t {
@@ -34,29 +43,40 @@ enum class OrderAction : uint8_t {
 
 struct alignas(64) Order {
     OrderId id{0};
+    ClientId client_id{0};
     Price price{0};
     Quantity initial_qty{0};
     Quantity remaining_qty{0};
+    Quantity display_qty{0};   // For Iceberg orders: visible size in L2 book
+    Quantity hidden_qty{0};    // For Iceberg orders: reserve size in background
     Side side{Side::BUY};
     OrderType type{OrderType::LIMIT};
+    SelfTradePrevention stp{SelfTradePrevention::NONE};
     Timestamp timestamp{0};
     
     // Intrusive Doubly-Linked List Pointers for O(1) Insertion & Deletion in Price Bucket
     Order* prev{nullptr};
     Order* next{nullptr};
 
-    bool is_filled() const noexcept {
+    [[nodiscard]] bool is_filled() const noexcept {
         return remaining_qty == 0;
+    }
+
+    [[nodiscard]] bool is_iceberg() const noexcept {
+        return hidden_qty > 0 || (display_qty > 0 && display_qty < initial_qty);
     }
 };
 
 struct Trade {
     OrderId maker_order_id{0};
     OrderId taker_order_id{0};
+    ClientId maker_client_id{0};
+    ClientId taker_client_id{0};
     Price price{0};
     Quantity quantity{0};
     Side taker_side{Side::BUY};
     Timestamp timestamp{0};
+    bool is_liquidity_maker{true};
 };
 
 struct Level2Entry {

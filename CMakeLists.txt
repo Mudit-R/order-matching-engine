@@ -24,8 +24,11 @@ add_library(matching_engine_core STATIC
 add_executable(matching_engine_server src/main.cpp)
 target_link_libraries(matching_engine_server PRIVATE matching_engine_core)
 
-# Unit Test Runner
+# Core Unit Test Runner
 add_executable(engine_unit_tests tests/test_order_book.cpp src/order_book.cpp)
+
+# Advanced Institutional Features Test (Iceberg, STP, FIX 4.2, WAL)
+add_executable(advanced_unit_tests tests/test_advanced_features.cpp src/order_book.cpp)
 
 # Microsecond Benchmark
 add_executable(engine_benchmark benchmarks/benchmark_throughput.cpp src/order_book.cpp)

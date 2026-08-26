@@ -10,10 +10,6 @@
 
 namespace Engine {
 
-/**
- * @brief PriceLevel represents an aggregation of all active orders at a specific price.
- * Orders are chained in an intrusive doubly-linked list to guarantee strict FIFO (time-priority).
- */
 struct PriceLevel {
     Price price{0};
     Quantity total_quantity{0};
@@ -54,11 +50,6 @@ struct PriceLevel {
     }
 };
 
-/**
- * @brief Institutional-Grade Continuous Limit Order Book.
- * Supports Price-Time Priority, GTC, IOC, FOK, Market Orders, Order Cancellations,
- * and real-time Level 2 Market Depth calculation.
- */
 class LimitOrderBook {
 public:
     using TradeCallback = std::function<void(const Trade&)>;
@@ -66,8 +57,16 @@ public:
     explicit LimitOrderBook(std::string symbol, TradeCallback on_trade = nullptr);
     ~LimitOrderBook();
 
-    // Order operations
-    bool addOrder(OrderId id, Side side, OrderType type, Price price, Quantity qty, Timestamp ts = 0);
+    // Order operations with Iceberg, STP, and Post-Only support
+    bool addOrder(OrderId id, ClientId client_id, Side side, OrderType type,
+                  Price price, Quantity qty, Quantity display_qty = 0,
+                  SelfTradePrevention stp = SelfTradePrevention::NONE, Timestamp ts = 0);
+    
+    // Convenience overload
+    bool addOrder(OrderId id, Side side, OrderType type, Price price, Quantity qty, Timestamp ts = 0) {
+        return addOrder(id, 1, side, type, price, qty, 0, SelfTradePrevention::NONE, ts);
+    }
+
     bool cancelOrder(OrderId id);
     bool modifyOrder(OrderId id, Quantity new_qty);
 
@@ -79,8 +78,8 @@ public:
     [[nodiscard]] Price getMidPrice() const noexcept;
     [[nodiscard]] size_t getActiveOrderCount() const noexcept { return order_index_.size(); }
 
-    // Level-2 Market Depth Snapshot (Aggregated price levels)
-    [[nodiscard]] Level2Snapshot getLevel2Snapshot(size_t max_depth = 10) const;
+    // Level-2 Market Depth Snapshot
+    [[nodiscard]] Level2Snapshot getLevel2Snapshot(size_t max_depth = 12) const;
 
     void setTradeCallback(TradeCallback callback) { on_trade_ = std::move(callback); }
 
@@ -89,21 +88,14 @@ private:
     void matchMarketOrder(Order* taker);
     bool canFillFOK(Side side, Price price, Quantity qty) const;
     void executeTrade(Order* maker, Order* taker, Price price, Quantity match_qty);
-    void removeFilledOrder(Order* order, PriceLevel& level);
+    void handleIcebergReplenish(Order* order, PriceLevel& level);
 
     std::string symbol_;
     TradeCallback on_trade_;
 
-    // Bids sorted in descending order (highest price first)
     std::map<Price, PriceLevel, std::greater<Price>> bids_;
-    
-    // Asks sorted in ascending order (lowest price first)
     std::map<Price, PriceLevel, std::less<Price>> asks_;
-
-    // Fast O(1) Hash Map for Order Lookup by ID
     std::unordered_map<OrderId, Order*> order_index_;
-
-    // Zero-allocation memory pool for Order structures
     ObjectPool<Order> order_pool_;
 };
 

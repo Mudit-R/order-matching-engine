@@ -56,40 +56,59 @@ bool LimitOrderBook::canFillFOK(Side side, Price price, Quantity target_qty) con
     return false;
 }
 
-bool LimitOrderBook::addOrder(OrderId id, Side side, OrderType type, Price price, Quantity qty, Timestamp ts) {
+bool LimitOrderBook::addOrder(OrderId id, ClientId client_id, Side side, OrderType type,
+                              Price price, Quantity qty, Quantity display_qty,
+                              SelfTradePrevention stp, Timestamp ts) {
     if (qty == 0 || order_index_.find(id) != order_index_.end()) {
-        return false; // Invalid quantity or duplicate order ID
+        return false;
     }
 
     if (ts == 0) {
         ts = getCurrentTimestampNs();
     }
 
-    // Handle Fill-Or-Kill (FOK) pre-check
+    // Post-Only check: Reject if it would cross the spread and take liquidity
+    if (type == OrderType::POST_ONLY) {
+        if (side == Side::BUY && getBestAsk() > 0 && price >= getBestAsk()) {
+            return false; // Would cross ask -> Reject
+        }
+        if (side == Side::SELL && getBestBid() > 0 && price <= getBestBid()) {
+            return false; // Would cross bid -> Reject
+        }
+    }
+
+    // Fill-Or-Kill (FOK) pre-check
     if (type == OrderType::FOK) {
         if (!canFillFOK(side, price, qty)) {
-            return false; // Reject immediately if full quantity cannot be filled
+            return false;
         }
     }
 
     Order* order = order_pool_.acquire();
     order->id = id;
+    order->client_id = client_id;
     order->price = price;
     order->initial_qty = qty;
     order->remaining_qty = qty;
     order->side = side;
     order->type = type;
+    order->stp = stp;
     order->timestamp = ts;
     order->prev = nullptr;
     order->next = nullptr;
 
+    // Handle Iceberg slice
+    if (display_qty > 0 && display_qty < qty) {
+        order->display_qty = display_qty;
+        order->hidden_qty = qty - display_qty;
+        order->remaining_qty = display_qty; // Visible in queue
+    } else {
+        order->display_qty = qty;
+        order->hidden_qty = 0;
+    }
+
     if (type == OrderType::MARKET) {
         matchMarketOrder(order);
-        if (order->is_filled()) {
-            order_pool_.release(order);
-            return true;
-        }
-        // Unfilled market order remaining is cancelled
         order_pool_.release(order);
         return true;
     }
@@ -97,18 +116,17 @@ bool LimitOrderBook::addOrder(OrderId id, Side side, OrderType type, Price price
     // Match against opposing book
     matchLimitOrder(order);
 
-    if (order->is_filled()) {
+    if (order->is_filled() && order->hidden_qty == 0) {
         order_pool_.release(order);
         return true;
     }
 
-    // If IOC order and partially filled, cancel remainder
     if (type == OrderType::IOC || type == OrderType::FOK) {
         order_pool_.release(order);
         return true;
     }
 
-    // Rest unfilled quantity on the book (GTC limit order)
+    // Rest unfilled quantity on the book (GTC / Post-Only)
     order_index_[id] = order;
     if (side == Side::BUY) {
         auto& level = bids_[price];
@@ -129,7 +147,7 @@ void LimitOrderBook::matchLimitOrder(Order* taker) {
         while (it != asks_.end() && !taker->is_filled()) {
             Price ask_price = it->first;
             if (ask_price > taker->price) {
-                break; // Crossing price condition violated
+                break;
             }
 
             PriceLevel& level = it->second;
@@ -137,13 +155,33 @@ void LimitOrderBook::matchLimitOrder(Order* taker) {
 
             while (maker != nullptr && !taker->is_filled()) {
                 Order* next_maker = maker->next;
+
+                // Self-Trade Prevention (STP) check
+                if (maker->client_id == taker->client_id && taker->stp != SelfTradePrevention::NONE) {
+                    if (taker->stp == SelfTradePrevention::CANCEL_TAKER) {
+                        taker->remaining_qty = 0;
+                        taker->hidden_qty = 0;
+                        return;
+                    } else if (taker->stp == SelfTradePrevention::CANCEL_MAKER) {
+                        order_index_.erase(maker->id);
+                        level.remove(maker);
+                        order_pool_.release(maker);
+                        maker = next_maker;
+                        continue;
+                    }
+                }
+
                 Quantity match_qty = std::min(taker->remaining_qty, maker->remaining_qty);
                 executeTrade(maker, taker, ask_price, match_qty);
 
                 if (maker->is_filled()) {
-                    order_index_.erase(maker->id);
-                    level.remove(maker);
-                    order_pool_.release(maker);
+                    if (maker->hidden_qty > 0) {
+                        handleIcebergReplenish(maker, level);
+                    } else {
+                        order_index_.erase(maker->id);
+                        level.remove(maker);
+                        order_pool_.release(maker);
+                    }
                 }
                 maker = next_maker;
             }
@@ -154,12 +192,12 @@ void LimitOrderBook::matchLimitOrder(Order* taker) {
                 ++it;
             }
         }
-    } else { // SELL Order
+    } else { // SELL Taker
         auto it = bids_.begin();
         while (it != bids_.end() && !taker->is_filled()) {
             Price bid_price = it->first;
             if (bid_price < taker->price) {
-                break; // Crossing price condition violated
+                break;
             }
 
             PriceLevel& level = it->second;
@@ -167,13 +205,32 @@ void LimitOrderBook::matchLimitOrder(Order* taker) {
 
             while (maker != nullptr && !taker->is_filled()) {
                 Order* next_maker = maker->next;
+
+                if (maker->client_id == taker->client_id && taker->stp != SelfTradePrevention::NONE) {
+                    if (taker->stp == SelfTradePrevention::CANCEL_TAKER) {
+                        taker->remaining_qty = 0;
+                        taker->hidden_qty = 0;
+                        return;
+                    } else if (taker->stp == SelfTradePrevention::CANCEL_MAKER) {
+                        order_index_.erase(maker->id);
+                        level.remove(maker);
+                        order_pool_.release(maker);
+                        maker = next_maker;
+                        continue;
+                    }
+                }
+
                 Quantity match_qty = std::min(taker->remaining_qty, maker->remaining_qty);
                 executeTrade(maker, taker, bid_price, match_qty);
 
                 if (maker->is_filled()) {
-                    order_index_.erase(maker->id);
-                    level.remove(maker);
-                    order_pool_.release(maker);
+                    if (maker->hidden_qty > 0) {
+                        handleIcebergReplenish(maker, level);
+                    } else {
+                        order_index_.erase(maker->id);
+                        level.remove(maker);
+                        order_pool_.release(maker);
+                    }
                 }
                 maker = next_maker;
             }
@@ -185,6 +242,16 @@ void LimitOrderBook::matchLimitOrder(Order* taker) {
             }
         }
     }
+}
+
+void LimitOrderBook::handleIcebergReplenish(Order* order, PriceLevel& level) {
+    Quantity replenish_qty = std::min(order->display_qty, order->hidden_qty);
+    order->hidden_qty -= replenish_qty;
+    order->remaining_qty = replenish_qty;
+
+    // Move to the back of the queue (gives up time-priority for newly displayed tranche)
+    level.remove(order);
+    level.append(order);
 }
 
 void LimitOrderBook::matchMarketOrder(Order* taker) {
@@ -201,9 +268,13 @@ void LimitOrderBook::matchMarketOrder(Order* taker) {
                 executeTrade(maker, taker, ask_price, match_qty);
 
                 if (maker->is_filled()) {
-                    order_index_.erase(maker->id);
-                    level.remove(maker);
-                    order_pool_.release(maker);
+                    if (maker->hidden_qty > 0) {
+                        handleIcebergReplenish(maker, level);
+                    } else {
+                        order_index_.erase(maker->id);
+                        level.remove(maker);
+                        order_pool_.release(maker);
+                    }
                 }
                 maker = next_maker;
             }
@@ -227,9 +298,13 @@ void LimitOrderBook::matchMarketOrder(Order* taker) {
                 executeTrade(maker, taker, bid_price, match_qty);
 
                 if (maker->is_filled()) {
-                    order_index_.erase(maker->id);
-                    level.remove(maker);
-                    order_pool_.release(maker);
+                    if (maker->hidden_qty > 0) {
+                        handleIcebergReplenish(maker, level);
+                    } else {
+                        order_index_.erase(maker->id);
+                        level.remove(maker);
+                        order_pool_.release(maker);
+                    }
                 }
                 maker = next_maker;
             }
@@ -251,6 +326,8 @@ void LimitOrderBook::executeTrade(Order* maker, Order* taker, Price price, Quant
         Trade trade;
         trade.maker_order_id = maker->id;
         trade.taker_order_id = taker->id;
+        trade.maker_client_id = maker->client_id;
+        trade.taker_client_id = taker->client_id;
         trade.price = price;
         trade.quantity = match_qty;
         trade.taker_side = taker->side;
@@ -301,7 +378,6 @@ bool LimitOrderBook::modifyOrder(OrderId id, Quantity new_qty) {
         return cancelOrder(id);
     }
 
-    // If quantity is reduced, retain queue priority
     if (new_qty < order->remaining_qty) {
         Quantity diff = order->remaining_qty - new_qty;
         order->remaining_qty = new_qty;
@@ -313,7 +389,6 @@ bool LimitOrderBook::modifyOrder(OrderId id, Quantity new_qty) {
         return true;
     }
 
-    // If quantity increases, cancel and re-insert at tail of queue to preserve strict time-priority
     Side side = order->side;
     OrderType type = order->type;
     Price price = order->price;

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexusEngine | Institutional Limit Order Book & Matching Terminal</title>
-    <meta name="description" content="High-throughput, low-latency in-memory limit order book and matching engine visualizer with Level 2 market depth and live trade blotter.">
+    <meta name="description" content="High-throughput, low-latency in-memory limit order book and matching engine visualizer with Level 2 market depth, candlestick chart, FIX 4.2 wire inspector, and live trade blotter.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
         <div class="brand">
             <div class="logo-icon">⚡</div>
             <div class="brand-text">
-                <span class="brand-title">NexusEngine <span class="badge">LOB v1.0</span></span>
+                <span class="brand-title">NexusEngine <span class="badge">PRO LOB v2.0</span></span>
                 <span class="brand-sub">Ultra Low-Latency C++20 / Java 22 Matching Core</span>
             </div>
         </div>
@@ -28,11 +28,13 @@
         </div>
 
         <div class="nav-actions">
+            <button class="nav-modal-btn" id="open-fix-btn">📟 FIX 4.2 Stream</button>
             <button class="nav-modal-btn" id="open-arch-btn">🏛️ Architecture</button>
-            <button class="nav-modal-btn" id="open-bench-btn">⚡ Run In-Browser Benchmark</button>
-            <a href="https://github.com/Mudit-R/cpp-order-matching-engine" target="_blank" class="github-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                <span>GitHub Repo</span>
+            <button class="nav-modal-btn" id="open-bench-btn">⚡ Microsecond Benchmark</button>
+            <button class="audio-toggle-btn" id="audio-toggle-btn" title="Toggle Sound">🔊 Audio ON</button>
+            <a href="https://github.com/Mudit-R/order-matching-engine" target="_blank" class="github-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                <span>GitHub</span>
             </a>
         </div>
 
@@ -61,24 +63,36 @@
         <!-- Column 1: Order Placement & Simulation Control -->
         <section class="panel order-entry-panel">
             <div class="panel-header">
-                <h2>ORDER ENTRY</h2>
-                <span class="pill-tag">DMA DIRECT ROUTE</span>
+                <h2>ORDER ENTRY (DMA)</h2>
+                <span class="pill-tag">LOCK-FREE SPSC</span>
             </div>
             
             <form id="order-form" class="order-form">
                 <div class="side-selector">
-                    <button type="button" class="side-btn buy-side active" id="btn-buy">BUY</button>
-                    <button type="button" class="side-btn sell-side" id="btn-sell">SELL</button>
+                    <button type="button" class="side-btn buy-side active" id="btn-buy">BUY (BID)</button>
+                    <button type="button" class="side-btn sell-side" id="btn-sell">SELL (ASK)</button>
                 </div>
 
-                <div class="form-group">
-                    <label for="order-type">Order Type</label>
-                    <select id="order-type" class="form-input">
-                        <option value="LIMIT">Limit Order (GTC)</option>
-                        <option value="MARKET">Market Order</option>
-                        <option value="IOC">Immediate-Or-Cancel (IOC)</option>
-                        <option value="FOK">Fill-Or-Kill (FOK)</option>
-                    </select>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="order-type">Order Type</label>
+                        <select id="order-type" class="form-input">
+                            <option value="LIMIT">Limit (GTC)</option>
+                            <option value="MARKET">Market</option>
+                            <option value="POST_ONLY">Post-Only (Maker)</option>
+                            <option value="IOC">IOC (Immediate)</option>
+                            <option value="FOK">FOK (All-or-None)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stp-mode">STP Mode</label>
+                        <select id="stp-mode" class="form-input">
+                            <option value="NONE">None</option>
+                            <option value="CANCEL_TAKER">Cancel Taker</option>
+                            <option value="CANCEL_MAKER">Cancel Maker</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group" id="price-group">
@@ -92,27 +106,47 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="order-qty">Quantity</label>
-                    <input type="number" id="order-qty" class="form-input" value="100" step="10" min="1">
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="order-qty">Total Quantity</label>
+                        <input type="number" id="order-qty" class="form-input" value="100" step="10" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="iceberg-qty">Display (Iceberg)</label>
+                        <input type="number" id="iceberg-qty" class="form-input" placeholder="Off" min="0" step="10">
+                    </div>
                 </div>
 
                 <button type="submit" class="submit-order-btn buy-btn" id="submit-order-btn">
                     <span>TRANSMIT BUY ORDER</span>
-                    <span class="btn-subtext">Lock-Free SPSC Direct Dispatch</span>
+                    <span class="btn-subtext">Zero-Copy Ingestion</span>
                 </button>
             </form>
 
             <div class="simulation-section">
                 <div class="sub-header">
-                    <h3>HFT LOAD SIMULATOR</h3>
-                    <span class="badge-mini">BENCHMARK</span>
+                    <h3>HFT LIQUIDITY SIMULATOR</h3>
+                    <span class="badge-mini">STRESS TEST</span>
                 </div>
-                <p class="sim-desc">Inject concurrent synthetic market maker and crossing liquidity orders.</p>
+                <p class="sim-desc">Inject Poisson-distributed market maker orders and cross-spread fills.</p>
                 <div class="sim-buttons">
-                    <button type="button" class="sim-btn" id="sim-burst-100">Burst 100 Orders</button>
-                    <button type="button" class="sim-btn glow" id="sim-burst-1000">Burst 1,000 Orders</button>
+                    <div class="sim-btn-row">
+                        <button type="button" class="sim-btn" id="sim-burst-100">+100 Orders</button>
+                        <button type="button" class="sim-btn glow" id="sim-burst-1000">+1,000 Orders</button>
+                    </div>
                     <button type="button" class="sim-btn toggle" id="sim-toggle-stream">▶ Auto Market Maker</button>
+                </div>
+            </div>
+
+            <!-- Active Orders Blotter (O(1) Cancellation Demo) -->
+            <div class="working-orders-section">
+                <div class="sub-header">
+                    <h3>WORKING ORDERS (ACTIVE)</h3>
+                    <span class="badge-mini" id="working-count">0</span>
+                </div>
+                <div class="working-orders-list" id="working-orders-list">
+                    <div class="empty-orders-msg">No resting orders in queue</div>
                 </div>
             </div>
         </section>
@@ -121,10 +155,21 @@
         <section class="panel depth-ladder-panel">
             <div class="panel-header">
                 <h2>LEVEL 2 MARKET DEPTH</h2>
-                <div class="spread-indicator">
-                    <span>SPREAD: <strong id="spread-val">$0.40</strong></span>
-                    <span class="dot-separator">•</span>
-                    <span>MID: <strong id="mid-val">$195.00</strong></span>
+                <div class="depth-controls">
+                    <div class="tick-group">
+                        <span class="control-lbl">TICK:</span>
+                        <select id="tick-size-select" class="mini-select">
+                            <option value="0.05">0.05</option>
+                            <option value="0.10">0.10</option>
+                            <option value="0.50">0.50</option>
+                            <option value="1.00">1.00</option>
+                        </select>
+                    </div>
+                    <div class="spread-indicator">
+                        <span>SPREAD: <strong id="spread-val">$0.40</strong></span>
+                        <span class="dot-separator">•</span>
+                        <span>MID: <strong id="mid-val">$195.00</strong></span>
+                    </div>
                 </div>
             </div>
 
@@ -159,11 +204,14 @@
             </div>
         </section>
 
-        <!-- Column 3: Live Visual Canvas Depth Chart & Trade Blotter -->
+        <!-- Column 3: Live Visual Chart & Trade Blotter -->
         <section class="panel visualization-panel">
-            <div class="panel-header">
-                <h2>DEPTH VISUALIZER</h2>
-                <span class="pill-tag">MICROSECOND SNAPSHOT</span>
+            <div class="panel-header tab-header">
+                <div class="tab-group">
+                    <button class="tab-btn active" id="tab-depth">Depth Curve</button>
+                    <button class="tab-btn" id="tab-candle">OHLCV Candles</button>
+                </div>
+                <span class="pill-tag">MICROSECOND RESOLUTION</span>
             </div>
             
             <div class="canvas-wrapper">
@@ -172,7 +220,7 @@
 
             <div class="panel-header trade-header">
                 <h2>EXECUTION BLOTTER</h2>
-                <span class="pill-tag">TIME-PRIORITY MATCHES</span>
+                <span class="pill-tag">FIFO MATCHED</span>
             </div>
 
             <div class="trade-blotter-container">
@@ -209,6 +257,26 @@
                     <h4>3. Cache Alignment & False Sharing Elimination</h4>
                     <p>All core state variables are aligned to 64-byte boundaries with <code>alignas(64)</code> to ensure dedicated L1 cache-lines per CPU core.</p>
                 </div>
+                <div class="arch-card">
+                    <h4>4. Deterministic WAL & Event Sourcing</h4>
+                    <p>Append-only binary Write-Ahead-Logger (WAL) allows 100% deterministic crash replay and audit recovery with zero data loss.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIX 4.2 Protocol Modal -->
+    <div class="modal-backdrop" id="fix-modal">
+        <div class="modal-box fix-modal-box">
+            <div class="modal-header">
+                <h3>📟 Live FIX 4.2 Tag-Value Raw Wire Stream</h3>
+                <button class="close-modal-btn" id="close-fix-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="fix-desc">Real-time Financial Information eXchange (FIX 4.2) packets transmitted on every order and fill.</p>
+                <div class="fix-stream-container" id="fix-stream-container">
+                    <div class="fix-log-entry"><span class="fix-tag">8=FIX.4.2</span><span class="fix-delim">|</span><span class="fix-tag">35=A</span><span class="fix-delim">|</span><span class="fix-tag">49=CLIENT</span><span class="fix-delim">|</span><span class="fix-tag">56=NEXUS</span><span class="fix-delim">|</span><span class="fix-tag">98=0</span><span class="fix-delim">|</span><span class="fix-tag">108=30</span><span class="fix-delim">|</span><span class="fix-tag">10=000</span></div>
+                </div>
             </div>
         </div>
     </div>
@@ -238,7 +306,7 @@
     <!-- Footer System Status -->
     <footer class="terminal-footer">
         <div class="footer-left">
-            <span>⚡ Architecture: Cache-Aligned Ring Buffer (SPSC) + Intrusive Doubly-Linked Buckets + Zero Heap-Alloc Pool</span>
+            <span>⚡ Architecture: Cache-Aligned Ring Buffer (SPSC) + Intrusive Doubly-Linked Buckets + Iceberg Replenish + FIX 4.2 Stream</span>
         </div>
         <div class="footer-right">
             <span>Deterministic FIFO Priority Enforced</span>

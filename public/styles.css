@@ -21,6 +21,7 @@
     --accent-blue: #388bfd;
     --accent-cyan: #39c5bb;
     --accent-amber: #f0883e;
+    --accent-purple: #a371f7;
 
     --font-mono: 'JetBrains Mono', monospace;
     --font-ui: 'Outfit', sans-serif;
@@ -156,6 +157,22 @@ body {
     border-color: var(--accent-blue);
 }
 
+.audio-toggle-btn {
+    background: rgba(163, 113, 247, 0.15);
+    border: 1px solid rgba(163, 113, 247, 0.3);
+    color: var(--accent-purple);
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.audio-toggle-btn:hover {
+    background: rgba(163, 113, 247, 0.3);
+}
+
 .github-link {
     display: flex;
     align-items: center;
@@ -233,7 +250,7 @@ body {
 .terminal-grid {
     flex: 1;
     display: grid;
-    grid-template-columns: 320px 420px 1fr;
+    grid-template-columns: 340px 430px 1fr;
     gap: 12px;
     padding: 12px;
     overflow: hidden;
@@ -276,10 +293,10 @@ body {
 
 /* Order Entry Form */
 .order-entry-panel {
-    padding: 14px;
+    padding: 12px 14px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 10px;
     overflow-y: auto;
 }
 
@@ -290,8 +307,8 @@ body {
 }
 
 .side-btn {
-    padding: 10px;
-    font-size: 14px;
+    padding: 9px;
+    font-size: 13px;
     font-weight: 700;
     font-family: var(--font-ui);
     border: 1px solid var(--border-color);
@@ -316,14 +333,20 @@ body {
     box-shadow: 0 0 12px var(--ask-red-glow);
 }
 
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 }
 
 .form-group label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--text-secondary);
 }
@@ -333,8 +356,8 @@ body {
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     font-family: var(--font-mono);
-    font-size: 13px;
-    padding: 8px 10px;
+    font-size: 12px;
+    padding: 6px 8px;
     border-radius: 6px;
     outline: none;
     transition: border-color 0.2s;
@@ -362,8 +385,8 @@ body {
     background: var(--bg-input);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    width: 32px;
-    font-size: 14px;
+    width: 28px;
+    font-size: 13px;
     font-weight: 700;
     border-radius: 4px;
     cursor: pointer;
@@ -374,10 +397,10 @@ body {
 }
 
 .submit-order-btn {
-    padding: 12px;
+    padding: 10px;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     font-family: var(--font-ui);
     cursor: pointer;
@@ -405,10 +428,6 @@ body {
     transform: translateY(-1px);
 }
 
-.submit-order-btn:active {
-    transform: translateY(0);
-}
-
 .btn-subtext {
     font-size: 9px;
     font-weight: 500;
@@ -416,12 +435,11 @@ body {
 }
 
 .simulation-section {
-    margin-top: 10px;
     border-top: 1px solid var(--border-color);
-    padding-top: 14px;
+    padding-top: 10px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .sub-header {
@@ -431,7 +449,7 @@ body {
 }
 
 .sub-header h3 {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: var(--accent-amber);
     letter-spacing: 0.5px;
@@ -448,23 +466,29 @@ body {
 }
 
 .sim-desc {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-muted);
-    line-height: 1.3;
+    line-height: 1.2;
 }
 
 .sim-buttons {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+}
+
+.sim-btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
 }
 
 .sim-btn {
     background: var(--bg-input);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    padding: 8px 10px;
-    font-size: 11px;
+    padding: 6px 8px;
+    font-size: 10px;
     font-weight: 600;
     font-family: var(--font-mono);
     border-radius: 4px;
@@ -483,19 +507,103 @@ body {
     color: var(--accent-blue);
 }
 
-.sim-btn.glow:hover {
-    background: rgba(56, 139, 253, 0.3);
-}
-
 .sim-btn.toggle {
     border-color: var(--bid-green);
     color: var(--bid-green);
+}
+
+/* Working Orders Blotter */
+.working-orders-section {
+    border-top: 1px solid var(--border-color);
+    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.working-orders-list {
+    max-height: 110px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+}
+
+.empty-orders-msg {
+    color: var(--text-muted);
+    font-size: 10px;
+    text-align: center;
+    padding: 8px 0;
+}
+
+.working-order-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-secondary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border-left: 3px solid var(--accent-blue);
+}
+
+.working-order-item.buy-item {
+    border-left-color: var(--bid-green);
+}
+
+.working-order-item.sell-item {
+    border-left-color: var(--ask-red);
+}
+
+.cancel-ord-btn {
+    background: rgba(255, 51, 102, 0.2);
+    border: 1px solid rgba(255, 51, 102, 0.4);
+    color: var(--ask-red);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.cancel-ord-btn:hover {
+    background: var(--ask-red);
+    color: #fff;
 }
 
 /* Order Book Ladder */
 .depth-ladder-panel {
     display: flex;
     flex-direction: column;
+}
+
+.depth-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tick-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.control-lbl {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.mini-select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    outline: none;
 }
 
 .spread-indicator {
@@ -627,10 +735,38 @@ body {
     border-radius: 3px;
 }
 
-/* Visualization & Blotter Panel */
+/* Visualization Panel */
 .visualization-panel {
     display: flex;
     flex-direction: column;
+}
+
+.tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tab-group {
+    display: flex;
+    gap: 4px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    background: var(--bg-panel);
+    border-color: var(--border-color);
+    color: var(--text-primary);
 }
 
 .canvas-wrapper {
@@ -722,6 +858,10 @@ body {
     overflow: hidden;
 }
 
+.fix-modal-box {
+    width: 720px;
+}
+
 .modal-header {
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
@@ -769,6 +909,38 @@ body {
     color: var(--accent-blue);
     font-size: 13px;
     margin-bottom: 4px;
+}
+
+/* FIX Wire Stream */
+.fix-stream-container {
+    background: #020408;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    height: 320px;
+    overflow-y: auto;
+    padding: 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fix-log-entry {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 4px 6px;
+    border-radius: 4px;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+.fix-tag {
+    color: var(--accent-cyan);
+}
+
+.fix-delim {
+    color: var(--accent-amber);
+    font-weight: 700;
 }
 
 .run-bench-action-btn {
