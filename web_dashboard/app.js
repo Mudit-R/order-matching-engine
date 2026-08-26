@@ -377,6 +377,18 @@ document.getElementById('close-modal-fix').addEventListener('click', () => modal
 document.getElementById('btn-open-bench').addEventListener('click', () => modalBench.classList.add('show'));
 document.getElementById('close-modal-bench').addEventListener('click', () => modalBench.classList.remove('show'));
 
+window.addEventListener('click', (e) => {
+    if (e.target === modalFix) modalFix.classList.remove('show');
+    if (e.target === modalBench) modalBench.classList.remove('show');
+});
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        modalFix.classList.remove('show');
+        modalBench.classList.remove('show');
+    }
+});
+
 // Audio Toggle
 const btnToggleAudio = document.getElementById('btn-toggle-audio');
 btnToggleAudio.addEventListener('click', () => {
