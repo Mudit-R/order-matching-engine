@@ -3,456 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusEngine | Tactile Core & Low-Latency Execution Terminal</title>
-    <meta name="description" content="Tactile institutional hardware dashboard and ultra-low-latency limit order book matching engine.">
+    <title>NexusEngine | Institutional Limit Order Book & Execution Terminal</title>
+    <meta name="description" content="Ultra low-latency C++20 limit order book and matching engine trading terminal.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="tactile-theme">
-    <!-- Main Tactile Master Container -->
-    <div class="tactile-app-viewport">
-        
-        <!-- Mode Switcher & Top Header Strip -->
-        <div class="tactile-top-bar">
-            <div class="top-brand">
-                <span class="brand-title">NEXUS<span class="brand-accent">CORE</span></span>
-                <span class="chassis-tag">DSP-6X CHASSIS</span>
+<body>
+    <div class="app-container">
+        <!-- Top Seamless Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="brand-group">
+                    <span class="brand-mark"></span>
+                    <span class="brand-name">NEXUS<span class="brand-glow">ENGINE</span></span>
+                    <span class="badge-tag">LOB v2.5</span>
+                </div>
+
+                <div class="market-nav">
+                    <button class="nav-market-btn active" data-symbol="NIFTY50">
+                        <span class="m-sym">NIFTY50</span>
+                        <span class="m-val" id="hdr-price-nifty">19,500.00</span>
+                    </button>
+                    <button class="nav-market-btn" data-symbol="BANKNIFTY">
+                        <span class="m-sym">BANKNIFTY</span>
+                        <span class="m-val" id="hdr-price-bank">44,200.00</span>
+                    </button>
+                    <button class="nav-market-btn" data-symbol="RELIANCE">
+                        <span class="m-sym">RELIANCE</span>
+                        <span class="m-val" id="hdr-price-rel">2,500.00</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="view-mode-tabs">
-                <button class="view-mode-btn active" id="btn-view-tactile">TACTILE PIPELINE</button>
-                <button class="view-mode-btn" id="btn-view-terminal">LOB TRADING DESK</button>
+            <div class="header-ticker">
+                <div class="ticker-box">
+                    <span class="tb-label">Engine Latency</span>
+                    <span class="tb-val glow-mint">0.16 µs (P99: 0.50µs)</span>
+                </div>
+                <div class="ticker-box">
+                    <span class="tb-label">Processed Orders</span>
+                    <span class="tb-val" id="stat-total-orders">0</span>
+                </div>
+                <div class="ticker-box">
+                    <span class="tb-label">Matched Trades</span>
+                    <span class="tb-val" id="stat-total-trades">0</span>
+                </div>
             </div>
 
-            <div class="top-nav-actions">
-                <button class="header-action-btn" id="btn-burst-trigger">INJECT 1,000 ORDERS</button>
-                <button class="header-action-btn" id="btn-toggle-auto">AUTO SIMULATOR</button>
-                <button class="header-action-btn" id="btn-toggle-audio">AUDIO: ON</button>
-                <a href="https://github.com/Mudit-R/order-matching-engine" target="_blank" class="github-action-link">
+            <div class="header-right">
+                <button class="action-pill-btn glow-action" id="btn-burst-1000">+1,000 Burst</button>
+                <button class="action-pill-btn" id="btn-toggle-sim">Auto MM</button>
+                <button class="action-pill-btn" id="btn-open-fix">FIX 4.2</button>
+                <button class="action-pill-btn" id="btn-open-bench">Benchmark</button>
+                <button class="action-pill-btn" id="btn-toggle-audio">Audio: ON</button>
+                <a href="https://github.com/Mudit-R/order-matching-engine" target="_blank" class="github-pill">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                    <span>SOURCE</span>
+                    <span>GitHub</span>
                 </a>
             </div>
-        </div>
+        </header>
 
-        <!-- VIEW 1: TACTILE HARDWARE CONSOLE (Matching exact reference design) -->
-        <div class="tactile-hardware-frame" id="view-tactile-console">
-            
-            <!-- LEFT CONTROL POD -->
-            <aside class="tactile-left-pod">
-                <!-- Large Metric Display -->
-                <div class="pod-metric-box">
-                    <span class="pod-lbl">Throughput</span>
-                    <span class="pod-big-num" id="pod-throughput-val">174</span>
-                    <span class="pod-unit" id="pod-throughput-unit">k Orders/sec</span>
+        <!-- Main Borderless Trading Layout -->
+        <main class="trading-layout">
+            <!-- COLUMN 1: Order Placement Pod (Seamless Recessed Slab) -->
+            <aside class="slab-card order-entry-slab">
+                <div class="slab-header">
+                    <span class="slab-title">ORDER ENTRY</span>
+                    <span class="slab-sub">DMA SPSC</span>
                 </div>
 
-                <!-- Matrix LED Grid -->
-                <div class="pod-led-matrix">
-                    <div class="matrix-row">
-                        <span class="led-dot active"></span>
-                        <span class="led-dot"></span>
-                        <span class="led-dot"></span>
-                        <span class="led-dot active"></span>
-                        <span class="led-dot active"></span>
-                        <span class="led-dot"></span>
-                    </div>
-                    <div class="matrix-row">
-                        <span class="led-dot active"></span>
-                        <span class="led-dot active"></span>
-                        <span class="led-dot active"></span>
-                        <span class="led-dot active"></span>
-                        <span class="led-dot active"></span>
-                        <span class="led-dot active"></span>
-                    </div>
-                    <div class="matrix-row">
-                        <span class="led-dot"></span>
-                        <span class="led-dot"></span>
-                        <span class="led-dot"></span>
-                        <span class="led-dot"></span>
-                        <span class="led-dot active"></span>
-                        <span class="led-dot"></span>
-                    </div>
+                <div class="side-toggle-track">
+                    <button type="button" class="side-pill-btn active-buy" id="btn-side-buy">BUY</button>
+                    <button type="button" class="side-pill-btn" id="btn-side-sell">SELL</button>
                 </div>
 
-                <!-- Navigation List -->
-                <nav class="pod-nav-list">
-                    <button class="pod-nav-item" data-channel="gateway">
-                        <span class="nav-indicator"></span>
-                        <span>Gateway Switch</span>
-                    </button>
-                    <button class="pod-nav-item active" data-channel="core">
-                        <span class="nav-indicator active-dot"></span>
-                        <span>Matching Cores</span>
-                    </button>
-                    <button class="pod-nav-item" data-channel="wal">
-                        <span class="nav-indicator"></span>
-                        <span>WAL Collector</span>
-                    </button>
-                    <button class="pod-nav-item" data-channel="fix">
-                        <span class="nav-indicator"></span>
-                        <span>FIX 4.2 Valve</span>
-                    </button>
-                </nav>
-            </aside>
-
-            <!-- CENTER: 6 RECESSED TACTILE MATCHING CHAMBERS -->
-            <main class="tactile-chambers-grid">
-                
-                <!-- CHAMBER 1: NIFTY50 MAIN -->
-                <div class="chamber-cell" id="chamber-1">
-                    <div class="chamber-num-bg">1</div>
-                    
-                    <!-- Top Striped Fill Level -->
-                    <div class="chamber-hatch-track">
-                        <div class="hatch-bar" style="height: 70%;"></div>
-                        <span class="hatch-pct-txt">70%</span>
-                    </div>
-
-                    <!-- Middle Turbine / Fan Motor Section -->
-                    <div class="chamber-fan-section">
-                        <div class="tactile-fan-propeller idle-fan">
-                            <span class="blade blade-1"></span>
-                            <span class="blade blade-2"></span>
-                            <span class="blade blade-3"></span>
-                            <span class="blade blade-4"></span>
+                <form id="order-form" class="order-form-body">
+                    <div class="form-grid-2">
+                        <div class="input-cell">
+                            <label for="order-type">Type</label>
+                            <select id="order-type" class="recessed-select">
+                                <option value="LIMIT">Limit (GTC)</option>
+                                <option value="MARKET">Market</option>
+                                <option value="POST_ONLY">Post-Only</option>
+                                <option value="IOC">IOC</option>
+                                <option value="FOK">FOK</option>
+                            </select>
                         </div>
-                        <span class="fan-rpm-val">0%</span>
-                    </div>
-
-                    <!-- Lower Stage Collector -->
-                    <div class="chamber-lower-stage">
-                        <div class="tactile-cross-icon idle-cross">✕</div>
-                        <span class="lower-metric-val">180</span>
-                    </div>
-
-                    <!-- Bottom Recessed Well -->
-                    <div class="chamber-bottom-well">
-                        <div class="well-glow-slot"></div>
-                        <span class="well-metric-display" id="ch-metric-1">185.0</span>
-                    </div>
-                </div>
-
-                <!-- CHAMBER 2: BANKNIFTY HIGH-VOL -->
-                <div class="chamber-cell" id="chamber-2">
-                    <div class="chamber-num-bg">2</div>
-                    
-                    <div class="chamber-hatch-track">
-                        <div class="hatch-bar" style="height: 60%;"></div>
-                        <span class="hatch-pct-txt">60%</span>
-                    </div>
-
-                    <div class="chamber-fan-section">
-                        <div class="tactile-fan-propeller idle-fan">
-                            <span class="blade blade-1"></span>
-                            <span class="blade blade-2"></span>
-                            <span class="blade blade-3"></span>
-                            <span class="blade blade-4"></span>
-                        </div>
-                        <span class="fan-rpm-val">0%</span>
-                    </div>
-
-                    <div class="chamber-lower-stage">
-                        <div class="tactile-cross-icon idle-cross">✕</div>
-                        <span class="lower-metric-val">180</span>
-                    </div>
-
-                    <div class="chamber-bottom-well">
-                        <div class="well-glow-slot"></div>
-                        <span class="well-metric-display" id="ch-metric-2">64.3</span>
-                    </div>
-                </div>
-
-                <!-- CHAMBER 3: RELIANCE (ACTIVE PRIMARY CORE) -->
-                <div class="chamber-cell active-chamber" id="chamber-3">
-                    <div class="chamber-num-bg">3</div>
-                    
-                    <div class="chamber-hatch-track">
-                        <div class="hatch-bar" style="height: 100%;"></div>
-                        <span class="hatch-pct-txt">100%</span>
-                    </div>
-
-                    <div class="chamber-fan-section">
-                        <div class="tactile-fan-propeller active-fan spin-animation">
-                            <span class="blade blade-1"></span>
-                            <span class="blade blade-2"></span>
-                            <span class="blade blade-3"></span>
-                            <span class="blade blade-4"></span>
-                        </div>
-                        <span class="fan-rpm-val glow-txt">50%</span>
-                    </div>
-
-                    <div class="chamber-lower-stage">
-                        <div class="tactile-cross-icon active-cross glow-cross">✕</div>
-                        <span class="lower-metric-val glow-txt">180</span>
-                        <div class="active-down-arrow">↓</div>
-                    </div>
-
-                    <div class="chamber-bottom-well active-well">
-                        <div class="well-glow-slot glow-pill"></div>
-                        <span class="well-metric-display glow-txt" id="ch-metric-3">99.5</span>
-                    </div>
-                </div>
-
-                <!-- CHAMBER 4: HDFC DERIVATIVES -->
-                <div class="chamber-cell" id="chamber-4">
-                    <div class="chamber-num-bg">4</div>
-                    
-                    <div class="chamber-hatch-track">
-                        <div class="hatch-bar" style="height: 90%;"></div>
-                        <span class="hatch-pct-txt">90%</span>
-                    </div>
-
-                    <div class="chamber-fan-section">
-                        <div class="tactile-fan-propeller idle-fan">
-                            <span class="blade blade-1"></span>
-                            <span class="blade blade-2"></span>
-                            <span class="blade blade-3"></span>
-                            <span class="blade blade-4"></span>
-                        </div>
-                        <span class="fan-rpm-val">0%</span>
-                    </div>
-
-                    <div class="chamber-lower-stage">
-                        <div class="tactile-cross-icon idle-cross">✕</div>
-                        <span class="lower-metric-val">180</span>
-                    </div>
-
-                    <div class="chamber-bottom-well">
-                        <div class="well-glow-slot"></div>
-                        <span class="well-metric-display" id="ch-metric-4">5.1</span>
-                    </div>
-                </div>
-
-                <!-- CHAMBER 5: INFY TECH CORE -->
-                <div class="chamber-cell" id="chamber-5">
-                    <div class="chamber-num-bg">5</div>
-                    
-                    <div class="chamber-hatch-track">
-                        <div class="hatch-bar" style="height: 70%;"></div>
-                        <span class="hatch-pct-txt">70%</span>
-                    </div>
-
-                    <div class="chamber-fan-section">
-                        <div class="tactile-fan-propeller idle-fan">
-                            <span class="blade blade-1"></span>
-                            <span class="blade blade-2"></span>
-                            <span class="blade blade-3"></span>
-                            <span class="blade blade-4"></span>
-                        </div>
-                        <span class="fan-rpm-val">0%</span>
-                    </div>
-
-                    <div class="chamber-lower-stage">
-                        <div class="tactile-cross-icon idle-cross">✕</div>
-                        <span class="lower-metric-val">180</span>
-                    </div>
-
-                    <div class="chamber-bottom-well">
-                        <div class="well-glow-slot"></div>
-                        <span class="well-metric-display" id="ch-metric-5">267.5</span>
-                    </div>
-                </div>
-
-                <!-- CHAMBER 6: TCS SPARE CORE -->
-                <div class="chamber-cell" id="chamber-6">
-                    <div class="chamber-num-bg">6</div>
-                    
-                    <div class="chamber-hatch-track">
-                        <div class="hatch-bar" style="height: 0%;"></div>
-                        <span class="hatch-pct-txt">0%</span>
-                    </div>
-
-                    <div class="chamber-fan-section">
-                        <div class="tactile-fan-propeller idle-fan opacity-zero">
-                            <span class="blade blade-1"></span>
-                            <span class="blade blade-2"></span>
-                            <span class="blade blade-3"></span>
-                            <span class="blade blade-4"></span>
-                        </div>
-                        <span class="fan-rpm-val"></span>
-                    </div>
-
-                    <div class="chamber-lower-stage">
-                        <div class="tactile-cross-icon idle-cross">✕</div>
-                        <span class="lower-metric-val">180</span>
-                    </div>
-
-                    <div class="chamber-bottom-well">
-                        <div class="well-glow-slot"></div>
-                        <span class="well-metric-display" id="ch-metric-6">0.0</span>
-                    </div>
-                </div>
-            </main>
-
-            <!-- RIGHT TACTILE RAIL -->
-            <aside class="tactile-right-rail">
-                <div class="right-top-indicator">
-                    <span class="status-green-dot"></span>
-                </div>
-
-                <!-- Rotary Knob / Sensor -->
-                <div class="tactile-rotary-housing">
-                    <div class="tactile-dial-knob" id="dial-knob">
-                        <span class="knob-blade"></span>
-                        <span class="knob-blade"></span>
-                        <span class="knob-blade"></span>
-                        <span class="knob-blade"></span>
-                    </div>
-                </div>
-
-                <!-- Recessed Status Badges -->
-                <div class="recessed-badge-slot">
-                    <span class="badge-num glow-green" id="badge-pct-val">70%</span>
-                </div>
-
-                <div class="recessed-badge-slot">
-                    <span class="badge-num glow-green" id="badge-rpm-val">180</span>
-                </div>
-            </aside>
-        </div>
-
-        <!-- VIEW 2: LOB TRADING DESK (Bloomberg/TradingView Desk) -->
-        <div class="terminal-workspace-view" id="view-terminal-desk" style="display: none;">
-            <div class="trading-workspace-inner">
-                <!-- Panel 1: Order Placement & Algorithmic Orders -->
-                <aside class="panel-section order-entry-container">
-                    <div class="panel-tab-bar">
-                        <button class="panel-tab active">Standard DMA</button>
-                    </div>
-
-                    <div class="order-form-body">
-                        <div class="side-tab-group">
-                            <button type="button" class="side-action-btn buy-active" id="btn-side-buy">BUY / LONG</button>
-                            <button type="button" class="side-action-btn" id="btn-side-sell">SELL / SHORT</button>
-                        </div>
-
-                        <form id="order-form" class="clean-form">
-                            <div class="form-row">
-                                <div class="field-wrap">
-                                    <label for="order-type">Order Type</label>
-                                    <select id="order-type" class="native-input">
-                                        <option value="LIMIT">Limit (GTC)</option>
-                                        <option value="MARKET">Market</option>
-                                        <option value="POST_ONLY">Post-Only</option>
-                                        <option value="IOC">IOC</option>
-                                        <option value="FOK">FOK</option>
-                                    </select>
-                                </div>
-                                <div class="field-wrap">
-                                    <label for="stp-mode">STP Mode</label>
-                                    <select id="stp-mode" class="native-input">
-                                        <option value="NONE">None</option>
-                                        <option value="CANCEL_TAKER">Cancel Taker</option>
-                                        <option value="CANCEL_MAKER">Cancel Maker</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="field-wrap" id="price-field-wrap">
-                                <label for="order-price">Price ($)</label>
-                                <input type="number" id="order-price" class="native-input mono-font" value="195.00" step="0.05" min="0.01">
-                            </div>
-
-                            <div class="form-row">
-                                <div class="field-wrap">
-                                    <label for="order-qty">Order Qty</label>
-                                    <input type="number" id="order-qty" class="native-input mono-font" value="100" min="1" step="10">
-                                </div>
-                                <div class="field-wrap">
-                                    <label for="iceberg-qty">Iceberg</label>
-                                    <input type="number" id="iceberg-qty" class="native-input mono-font" placeholder="Full" min="0" step="10">
-                                </div>
-                            </div>
-
-                            <button type="submit" class="execute-order-btn buy-exec" id="execute-btn">
-                                <span class="exec-primary-text">Place Buy Order</span>
-                            </button>
-                        </form>
-                    </div>
-                </aside>
-
-                <!-- Panel 2: Level 2 Order Book Depth Ladder -->
-                <section class="panel-section orderbook-panel">
-                    <div class="panel-title-bar">
-                        <span class="panel-heading">ORDER BOOK</span>
-                        <div class="ob-controls">
-                            <select id="select-tick-group" class="control-select">
-                                <option value="0.05">0.05</option>
-                                <option value="0.10">0.10</option>
-                                <option value="0.50">0.50</option>
+                        <div class="input-cell">
+                            <label for="stp-mode">STP</label>
+                            <select id="stp-mode" class="recessed-select">
+                                <option value="NONE">None</option>
+                                <option value="CANCEL_TAKER">Cancel Taker</option>
+                                <option value="CANCEL_MAKER">Cancel Maker</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="ob-grid-header">
-                        <span>Price (USD)</span>
-                        <span class="col-qty">Size</span>
-                        <span class="col-orders">Orders</span>
-                        <span class="col-total">Total</span>
-                    </div>
-
-                    <div class="ladder-stream asks-stream" id="asks-stream"></div>
-                    <div class="mid-market-ribbon">
-                        <span class="mid-val" id="mid-price-display">19,500.00</span>
-                        <span class="spread-txt">Spread: <span id="spread-amount">0.40</span></span>
-                    </div>
-                    <div class="ladder-stream bids-stream" id="bids-stream"></div>
-                </section>
-
-                <!-- Panel 3: Chart & Trades -->
-                <section class="panel-section chart-and-trades-panel">
-                    <div class="chart-subpanel">
-                        <div class="panel-title-bar">
-                            <div class="chart-tab-group">
-                                <button class="chart-tab active" id="tab-view-depth">Market Depth</button>
-                                <button class="chart-tab" id="tab-view-candle">Price Candles</button>
+                    <div class="input-cell" id="price-input-cell">
+                        <div class="label-row">
+                            <label for="order-price">Price</label>
+                            <span class="label-unit">USD</span>
+                        </div>
+                        <div class="stepper-wrap">
+                            <input type="number" id="order-price" class="recessed-input mono" value="195.00" step="0.05" min="0.01">
+                            <div class="stepper-btns">
+                                <button type="button" class="step-btn" id="step-price-up">▲</button>
+                                <button type="button" class="step-btn" id="step-price-down">▼</button>
                             </div>
                         </div>
-                        <div class="canvas-render-container">
-                            <canvas id="main-trading-canvas"></canvas>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="input-cell">
+                            <label for="order-qty">Quantity</label>
+                            <input type="number" id="order-qty" class="recessed-input mono" value="100" min="1" step="10">
+                        </div>
+                        <div class="input-cell">
+                            <label for="iceberg-qty">Iceberg</label>
+                            <input type="number" id="iceberg-qty" class="recessed-input mono" placeholder="Full" min="0" step="10">
                         </div>
                     </div>
 
-                    <div class="blotter-subpanel">
-                        <div class="trades-grid-header">
-                            <span>Time</span>
-                            <span>Price ($)</span>
-                            <span class="col-right">Size</span>
-                            <span class="col-right">Maker / Taker</span>
-                        </div>
-                        <div class="trades-list" id="trades-list-body"></div>
+                    <div class="pct-btn-row">
+                        <button type="button" class="pct-pill" data-pct="0.25">25%</button>
+                        <button type="button" class="pct-pill" data-pct="0.50">50%</button>
+                        <button type="button" class="pct-pill" data-pct="0.75">75%</button>
+                        <button type="button" class="pct-pill" data-pct="1.00">100%</button>
                     </div>
-                </section>
-            </div>
-        </div>
 
-        <!-- Footer Chassis Status -->
-        <footer class="tactile-footer-bar">
-            <div class="footer-status-left">
-                <span>CORE 3 PINNED TO CPU 0</span>
-                <span class="sep-dot">•</span>
-                <span>CACHE-ALIGNED (64B) SPSC QUEUE ACTIVE</span>
-                <span class="sep-dot">•</span>
-                <span>0.50µs P99 DETERMINISTIC EXECUTION</span>
+                    <button type="submit" class="submit-action-btn buy-exec" id="execute-btn">
+                        <span>TRANSMIT BUY ORDER</span>
+                    </button>
+                </form>
+
+                <!-- Active Working Orders Blotter -->
+                <div class="working-orders-box">
+                    <div class="working-header">
+                        <span>WORKING ORDERS (<span id="working-count">0</span>)</span>
+                    </div>
+                    <div class="working-orders-stream" id="working-orders-stream">
+                        <div class="empty-msg">No resting orders</div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- COLUMN 2: Level 2 Order Book Depth Ladder -->
+            <section class="slab-card orderbook-slab">
+                <div class="slab-header">
+                    <span class="slab-title">MARKET DEPTH (L2)</span>
+                    <div class="tick-wrap">
+                        <span class="tick-lbl">TICK:</span>
+                        <select id="select-tick-size" class="recessed-select mini">
+                            <option value="0.05">0.05</option>
+                            <option value="0.10">0.10</option>
+                            <option value="0.50">0.50</option>
+                            <option value="1.00">1.00</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="ob-grid-head">
+                    <span>PRICE ($)</span>
+                    <span class="text-right">SIZE</span>
+                    <span class="text-right">ORDERS</span>
+                    <span class="text-right">TOTAL</span>
+                </div>
+
+                <!-- Asks Stream (Red) -->
+                <div class="ladder-container asks-ladder" id="asks-ladder">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Spread Ribbon -->
+                <div class="spread-ribbon">
+                    <span class="spread-mid-val" id="mid-price-txt">$195.00</span>
+                    <span class="spread-stat-txt">Spread: <span id="spread-amount-txt">0.40</span></span>
+                </div>
+
+                <!-- Bids Stream (Mint Green) -->
+                <div class="ladder-container bids-ladder" id="bids-ladder">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- COLUMN 3: Technical Canvas & Execution Feed -->
+            <section class="slab-card visualization-slab">
+                <!-- Top Chart Area -->
+                <div class="chart-section">
+                    <div class="slab-header chart-head">
+                        <div class="chart-tab-strip">
+                            <button class="chart-pill-btn active" id="tab-chart-depth">Depth Curve</button>
+                            <button class="chart-pill-btn" id="tab-chart-candle">Candlestick (1m)</button>
+                        </div>
+                        <div class="chart-legend">
+                            <span class="leg-bid">■ Bids</span>
+                            <span class="leg-ask">■ Asks</span>
+                        </div>
+                    </div>
+                    <div class="canvas-box">
+                        <canvas id="trading-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Bottom Blotter Area -->
+                <div class="blotter-section">
+                    <div class="slab-header blotter-head">
+                        <span class="slab-title">EXECUTION BLOTTER</span>
+                        <span class="slab-sub">FIFO MATCHES</span>
+                    </div>
+
+                    <div class="trades-grid-head">
+                        <span>TIME</span>
+                        <span>PRICE ($)</span>
+                        <span class="text-right">QTY</span>
+                        <span class="text-right">MAKER / TAKER</span>
+                    </div>
+
+                    <div class="trades-stream" id="trades-stream">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer Strip -->
+        <footer class="app-footer">
+            <div class="footer-left">
+                <span class="dot-live"></span>
+                <span>MATCHING ENGINE: <strong>HEALTHY (0.16µs AVG)</strong></span>
+                <span class="f-sep">•</span>
+                <span>SPSC RING BUFFER: <strong>1,048,576 SLOTS</strong></span>
+                <span class="f-sep">•</span>
+                <span>MEMORY POOL: <strong>65,536 PRE-ALLOCATED</strong></span>
             </div>
-            <div class="footer-status-right">
-                <span>MATCHES: <strong id="footer-trades-count">0</strong></span>
+            <div class="footer-right">
+                <span>DETERMINISTIC FIFO ENFORCED</span>
             </div>
         </footer>
     </div>
 
     <!-- Modals -->
-    <div class="modal-layer" id="modal-architecture">
-        <div class="modal-window">
-            <div class="modal-top">
-                <span class="modal-title">SYSTEM ARCHITECTURE</span>
-                <button class="modal-close-x" id="close-modal-arch">✕</button>
+    <div class="modal-backdrop" id="modal-fix">
+        <div class="modal-panel fix-panel">
+            <div class="modal-head">
+                <span>FIX 4.2 PROTOCOL WIRE LOG</span>
+                <button class="close-btn" id="close-modal-fix">✕</button>
             </div>
-            <div class="modal-content">
-                <p>Engineered in C++20 and Java 22 with Lock-Free SPSC Ring Buffers and Intrusive Doubly-Linked Buckets.</p>
+            <div class="fix-feed" id="fix-feed-body">
+                <div class="fix-row"><span class="f-tag">8=FIX.4.2</span>|<span class="f-tag">35=A</span>|<span class="f-tag">49=CLIENT</span>|<span class="f-tag">56=NEXUS</span>|10=000</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="modal-bench">
+        <div class="modal-panel">
+            <div class="modal-head">
+                <span>IN-BROWSER LATENCY PROFILER</span>
+                <button class="close-btn" id="close-modal-bench">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Run 50,000 double-auction limit & market order matches in browser JavaScript.</p>
+                <button class="bench-trigger-btn" id="btn-start-benchmark">START BENCHMARK</button>
+                <div class="bench-grid" id="bench-stats-grid" style="display: none;">
+                    <div class="bg-cell"><span class="bg-lbl">THROUGHPUT</span><span class="bg-val glow-mint" id="b-tps">--</span></div>
+                    <div class="bg-cell"><span class="bg-lbl">AVG LATENCY</span><span class="bg-val" id="b-avg">--</span></div>
+                    <div class="bg-cell"><span class="bg-lbl">P50 LATENCY</span><span class="bg-val" id="b-p50">--</span></div>
+                    <div class="bg-cell"><span class="bg-lbl">P99 LATENCY</span><span class="bg-val glow-cyan" id="b-p99">--</span></div>
+                </div>
             </div>
         </div>
     </div>
