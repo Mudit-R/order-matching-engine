@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusEngine | Institutional Limit Order Book & Matching Terminal</title>
+    <meta name="description" content="High-throughput, low-latency in-memory limit order book and matching engine visualizer with Level 2 market depth and live trade blotter.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="brand">
+            <div class="logo-icon">⚡</div>
+            <div class="brand-text">
+                <span class="brand-title">NexusEngine <span class="badge">LOB v1.0</span></span>
+                <span class="brand-sub">Ultra Low-Latency C++20 / Java 22 Matching Core</span>
+            </div>
+        </div>
+
+        <div class="market-selector">
+            <button class="symbol-btn active" data-symbol="NIFTY50">NIFTY50</button>
+            <button class="symbol-btn" data-symbol="BANKNIFTY">BANKNIFTY</button>
+            <button class="symbol-btn" data-symbol="RELIANCE">RELIANCE</button>
+        </div>
+
+        <div class="nav-actions">
+            <button class="nav-modal-btn" id="open-arch-btn">🏛️ Architecture</button>
+            <button class="nav-modal-btn" id="open-bench-btn">⚡ Run In-Browser Benchmark</button>
+            <a href="https://github.com/Mudit-R/cpp-order-matching-engine" target="_blank" class="github-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                <span>GitHub Repo</span>
+            </a>
+        </div>
+
+        <div class="system-stats">
+            <div class="stat-pill">
+                <span class="stat-label">ENGINE MODE</span>
+                <span class="stat-val live-indicator" id="engine-mode-status"><span class="pulse-dot"></span>CORE ACTIVE</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-label">PROCESSED ORDERS</span>
+                <span class="stat-val" id="stat-orders">0</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-label">MATCHED TRADES</span>
+                <span class="stat-val" id="stat-trades">0</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-label">P99 LATENCY</span>
+                <span class="stat-val highlight">&lt; 0.50 µs</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Grid Workspace -->
+    <main class="terminal-grid">
+        <!-- Column 1: Order Placement & Simulation Control -->
+        <section class="panel order-entry-panel">
+            <div class="panel-header">
+                <h2>ORDER ENTRY</h2>
+                <span class="pill-tag">DMA DIRECT ROUTE</span>
+            </div>
+            
+            <form id="order-form" class="order-form">
+                <div class="side-selector">
+                    <button type="button" class="side-btn buy-side active" id="btn-buy">BUY</button>
+                    <button type="button" class="side-btn sell-side" id="btn-sell">SELL</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="order-type">Order Type</label>
+                    <select id="order-type" class="form-input">
+                        <option value="LIMIT">Limit Order (GTC)</option>
+                        <option value="MARKET">Market Order</option>
+                        <option value="IOC">Immediate-Or-Cancel (IOC)</option>
+                        <option value="FOK">Fill-Or-Kill (FOK)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="price-group">
+                    <label for="order-price">Price ($)</label>
+                    <div class="input-with-stepper">
+                        <input type="number" id="order-price" class="form-input" value="195.00" step="0.05" min="0.01">
+                        <div class="stepper-actions">
+                            <button type="button" class="step-btn" id="price-up">+</button>
+                            <button type="button" class="step-btn" id="price-down">-</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="order-qty">Quantity</label>
+                    <input type="number" id="order-qty" class="form-input" value="100" step="10" min="1">
+                </div>
+
+                <button type="submit" class="submit-order-btn buy-btn" id="submit-order-btn">
+                    <span>TRANSMIT BUY ORDER</span>
+                    <span class="btn-subtext">Lock-Free SPSC Direct Dispatch</span>
+                </button>
+            </form>
+
+            <div class="simulation-section">
+                <div class="sub-header">
+                    <h3>HFT LOAD SIMULATOR</h3>
+                    <span class="badge-mini">BENCHMARK</span>
+                </div>
+                <p class="sim-desc">Inject concurrent synthetic market maker and crossing liquidity orders.</p>
+                <div class="sim-buttons">
+                    <button type="button" class="sim-btn" id="sim-burst-100">Burst 100 Orders</button>
+                    <button type="button" class="sim-btn glow" id="sim-burst-1000">Burst 1,000 Orders</button>
+                    <button type="button" class="sim-btn toggle" id="sim-toggle-stream">▶ Auto Market Maker</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Column 2: Level 2 Depth Ladder (The Core Order Book) -->
+        <section class="panel depth-ladder-panel">
+            <div class="panel-header">
+                <h2>LEVEL 2 MARKET DEPTH</h2>
+                <div class="spread-indicator">
+                    <span>SPREAD: <strong id="spread-val">$0.40</strong></span>
+                    <span class="dot-separator">•</span>
+                    <span>MID: <strong id="mid-val">$195.00</strong></span>
+                </div>
+            </div>
+
+            <div class="orderbook-container">
+                <div class="ob-header">
+                    <span>PRICE ($)</span>
+                    <span class="text-right">SIZE (QTY)</span>
+                    <span class="text-right">ORDERS</span>
+                    <span class="text-right">CUMULATIVE</span>
+                </div>
+
+                <!-- ASKS LADDER (Red) -->
+                <div class="ob-ladder asks-ladder" id="asks-ladder">
+                    <!-- Dynamic Asks Rows -->
+                </div>
+
+                <!-- SPREAD BANNER -->
+                <div class="spread-banner" id="spread-banner">
+                    <div class="spread-line"></div>
+                    <div class="spread-text">
+                        <span id="best-bid-val">194.80</span>
+                        <span class="spread-badge" id="spread-badge-val">SPREAD: 0.40</span>
+                        <span id="best-ask-val">195.20</span>
+                    </div>
+                    <div class="spread-line"></div>
+                </div>
+
+                <!-- BIDS LADDER (Green) -->
+                <div class="ob-ladder bids-ladder" id="bids-ladder">
+                    <!-- Dynamic Bids Rows -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Column 3: Live Visual Canvas Depth Chart & Trade Blotter -->
+        <section class="panel visualization-panel">
+            <div class="panel-header">
+                <h2>DEPTH VISUALIZER</h2>
+                <span class="pill-tag">MICROSECOND SNAPSHOT</span>
+            </div>
+            
+            <div class="canvas-wrapper">
+                <canvas id="depth-canvas"></canvas>
+            </div>
+
+            <div class="panel-header trade-header">
+                <h2>EXECUTION BLOTTER</h2>
+                <span class="pill-tag">TIME-PRIORITY MATCHES</span>
+            </div>
+
+            <div class="trade-blotter-container">
+                <div class="blotter-header">
+                    <span>TIME</span>
+                    <span>PRICE ($)</span>
+                    <span class="text-right">QTY</span>
+                    <span class="text-right">MAKER / TAKER</span>
+                </div>
+                <div class="trade-list" id="trade-list">
+                    <!-- Dynamic Trade Rows -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Architecture Modal -->
+    <div class="modal-backdrop" id="arch-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>🏛️ System Architecture & Low-Latency Design</h3>
+                <button class="close-modal-btn" id="close-arch-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="arch-card">
+                    <h4>1. Intrusive Doubly-Linked Lists ($O(1)$ Operations)</h4>
+                    <p>Unlike <code>std::list</code>, order queue pointers (<code>prev</code>/<code>next</code>) reside directly inside the cache-aligned <code>Order</code> struct. Cancellations and executions execute in $O(1)$ time with zero heap allocation.</p>
+                </div>
+                <div class="arch-card">
+                    <h4>2. Lock-Free SPSC Ring Buffer</h4>
+                    <p>Inter-thread communication between the Network I/O thread and the Core Matching thread operates over a cache-padded 1,048,576-slot ring buffer using atomic <code>acquire</code>/<code>release</code> memory semantics (zero mutexes, zero context switches).</p>
+                </div>
+                <div class="arch-card">
+                    <h4>3. Cache Alignment & False Sharing Elimination</h4>
+                    <p>All core state variables are aligned to 64-byte boundaries with <code>alignas(64)</code> to ensure dedicated L1 cache-lines per CPU core.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Benchmark Modal -->
+    <div class="modal-backdrop" id="bench-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>⚡ In-Browser Microsecond Latency Profiler</h3>
+                <button class="close-modal-btn" id="close-bench-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Run a real-time <strong>50,000 order benchmark</strong> directly in your browser JavaScript V8 engine.</p>
+                <button class="run-bench-action-btn" id="run-bench-action-btn">▶ START BENCHMARK</button>
+                <div class="bench-results" id="bench-results" style="display: none;">
+                    <div class="bench-metric-grid">
+                        <div class="b-metric"><span class="b-lbl">THROUGHPUT</span><span class="b-val" id="b-tps">--</span></div>
+                        <div class="b-metric"><span class="b-lbl">AVG LATENCY</span><span class="b-val" id="b-avg">--</span></div>
+                        <div class="b-metric"><span class="b-lbl">P50 LATENCY</span><span class="b-val" id="b-p50">--</span></div>
+                        <div class="b-metric"><span class="b-lbl">P99 LATENCY</span><span class="b-val highlight" id="b-p99">--</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer System Status -->
+    <footer class="terminal-footer">
+        <div class="footer-left">
+            <span>⚡ Architecture: Cache-Aligned Ring Buffer (SPSC) + Intrusive Doubly-Linked Buckets + Zero Heap-Alloc Pool</span>
+        </div>
+        <div class="footer-right">
+            <span>Deterministic FIFO Priority Enforced</span>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
