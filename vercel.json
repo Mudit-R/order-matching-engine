@@ -1,17 +1,8 @@
 {
-  "version": 2,
-  "public": true,
-  "name": "nexus-matching-engine",
-  "builds": [
+  "rewrites": [
     {
-      "src": "web_dashboard/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/web_dashboard/$1"
+      "source": "/(.*)",
+      "destination": "/web_dashboard/$1"
     }
   ]
 }
