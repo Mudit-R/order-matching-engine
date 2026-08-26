@@ -1,14 +1,13 @@
-// NexusEngine Terminal Logic & Client-Side In-Memory Matching Core v2.0
+// NexusCore Institutional Matching Engine Client Controller v2.4
 let currentSymbol = 'NIFTY50';
 let currentSide = 'BUY';
-let currentViewTab = 'depth'; // 'depth' or 'candle'
+let currentChartTab = 'depth'; // 'depth' or 'candle'
 let currentTickSize = 0.05;
 let isAutoMMRunning = false;
 let autoMMInterval = null;
-let useLocalServer = true;
 let isAudioEnabled = true;
 
-// Web Audio API Sound Synthesizer
+// Web Audio API Synthesizer (Professional subtle click and fill chime)
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 
@@ -19,14 +18,14 @@ function playTradeSound() {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-        osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.08); // A6 chime
-        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.06);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.08);
+        osc.stop(audioCtx.currentTime + 0.06);
     } catch (e) {}
 }
 
@@ -37,17 +36,17 @@ function playClickSound() {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(320, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        osc.frequency.setValueAtTime(260, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.04);
+        osc.stop(audioCtx.currentTime + 0.03);
     } catch (e) {}
 }
 
-// Client-Side In-Memory Order Book Engine
+// In-Memory Double-Auction Order Book Engine (Full Client-Side Runtime for Vercel Edge)
 class ClientOrderBook {
     constructor(symbol) {
         this.symbol = symbol;
@@ -68,7 +67,7 @@ class ClientOrderBook {
 
     seedInitialBook() {
         const mid = this.symbol === 'NIFTY50' ? 19500 : this.symbol === 'BANKNIFTY' ? 44200 : 25000;
-        for (let i = 1; i <= 8; i++) {
+        for (let i = 1; i <= 10; i++) {
             this.addOrder('BUY', 'LIMIT', mid - (i * 20), 50 * i);
             this.addOrder('SELL', 'LIMIT', mid + (i * 20), 40 * i);
         }
@@ -77,11 +76,11 @@ class ClientOrderBook {
     seedCandles() {
         let base = this.symbol === 'NIFTY50' ? 195.00 : this.symbol === 'BANKNIFTY' ? 442.00 : 250.00;
         const now = Date.now() - 30 * 60000;
-        for (let i = 0; i < 25; i++) {
+        for (let i = 0; i < 35; i++) {
             const open = base;
-            const high = open + Math.random() * 0.40;
-            const low = open - Math.random() * 0.40;
-            const close = (Math.random() > 0.5) ? high - Math.random() * 0.20 : low + Math.random() * 0.20;
+            const high = open + Math.random() * 0.35;
+            const low = open - Math.random() * 0.35;
+            const close = (Math.random() > 0.5) ? high - Math.random() * 0.15 : low + Math.random() * 0.15;
             const volume = Math.floor(Math.random() * 5000) + 1000;
             this.candles.push({ time: now + i * 60000, open, high, low, close, volume });
             base = close;
@@ -95,7 +94,7 @@ class ClientOrderBook {
         const now = Date.now();
         if (now - last.time > 60000) {
             this.candles.push({ time: now, open: p, high: p, low: p, close: p, volume: tradeQty });
-            if (this.candles.length > 40) this.candles.shift();
+            if (this.candles.length > 50) this.candles.shift();
         } else {
             last.high = Math.max(last.high, p);
             last.low = Math.min(last.low, p);
@@ -112,7 +111,7 @@ class ClientOrderBook {
         let visibleQty = (displayQty > 0 && displayQty < qty) ? displayQty : qty;
         let hiddenQty = (displayQty > 0 && displayQty < qty) ? (qty - displayQty) : 0;
 
-        // FIX Log Entry for Inbound New Order (35=D)
+        // FIX Log Entry (35=D NewOrderSingle)
         this.logFIXMessage(`8=FIX.4.2|35=D|11=ORD_${id}|55=${this.symbol}|54=${side === 'BUY' ? '1' : '2'}|38=${qty}|44=${(price/100).toFixed(2)}|40=${type}|10=000`);
 
         // Post-Only check
@@ -167,13 +166,12 @@ class ClientOrderBook {
 
                     if (maker.remainingQty <= 0) {
                         if (maker.hiddenQty > 0) {
-                            // Iceberg Replenish
                             const replenish = Math.min(maker.displayQty, maker.hiddenQty);
                             maker.hiddenQty -= replenish;
                             maker.remainingQty = replenish;
                             level.totalQty += replenish;
                             level.orders.shift();
-                            level.orders.push(maker); // Moves to tail of price level
+                            level.orders.push(maker);
                         } else {
                             level.orders.shift();
                             this.orderIndex.delete(maker.id);
@@ -245,7 +243,7 @@ class ClientOrderBook {
         }
 
         if (remaining > 0 && (type === 'LIMIT' || type === 'POST_ONLY')) {
-            const order = { id, clientId, side, price, remainingQty: visibleQty, displayQty: visibleQty, hiddenQty };
+            const order = { id, clientId, side, price, remainingQty: visibleQty, displayQty: visibleQty, hiddenQty, type };
             this.orderIndex.set(id, order);
             const targetMap = side === 'BUY' ? this.bids : this.asks;
             if (!targetMap.has(price)) {
@@ -287,7 +285,7 @@ class ClientOrderBook {
 
     logFIXMessage(raw) {
         this.fixMessages.unshift({ time: new Date().toLocaleTimeString(), raw });
-        if (this.fixMessages.length > 60) this.fixMessages.pop();
+        if (this.fixMessages.length > 80) this.fixMessages.pop();
     }
 
     getBestBid() {
@@ -338,127 +336,166 @@ const clientBooks = {
     'RELIANCE': new ClientOrderBook('RELIANCE')
 };
 
-// DOM Elements
-const symbolBtns = document.querySelectorAll('.symbol-btn');
-const btnBuy = document.getElementById('btn-buy');
-const btnSell = document.getElementById('btn-sell');
+// DOM References
+const symbolBtns = document.querySelectorAll('.inst-btn');
+const btnSideBuy = document.getElementById('btn-side-buy');
+const btnSideSell = document.getElementById('btn-side-sell');
 const orderForm = document.getElementById('order-form');
 const orderTypeSelect = document.getElementById('order-type');
 const stpModeSelect = document.getElementById('stp-mode');
-const priceGroup = document.getElementById('price-group');
+const priceFieldWrap = document.getElementById('price-field-wrap');
 const orderPriceInput = document.getElementById('order-price');
 const orderQtyInput = document.getElementById('order-qty');
 const icebergQtyInput = document.getElementById('iceberg-qty');
-const submitBtn = document.getElementById('submit-order-btn');
-const tickSizeSelect = document.getElementById('tick-size-select');
-const workingOrdersList = document.getElementById('working-orders-list');
-const workingCount = document.getElementById('working-count');
+const executeBtn = document.getElementById('execute-btn');
+const selectTickGroup = document.getElementById('select-tick-group');
 
-const asksLadder = document.getElementById('asks-ladder');
-const bidsLadder = document.getElementById('bids-ladder');
-const spreadVal = document.getElementById('spread-val');
-const midVal = document.getElementById('mid-val');
-const spreadBadgeVal = document.getElementById('spread-badge-val');
-const bestBidVal = document.getElementById('best-bid-val');
-const bestAskVal = document.getElementById('best-ask-val');
+const asksStream = document.getElementById('asks-stream');
+const bidsStream = document.getElementById('bids-stream');
+const midPriceDisplay = document.getElementById('mid-price-display');
+const spreadAmount = document.getElementById('spread-amount');
+const spreadBps = document.getElementById('spread-bps');
 
-const statOrders = document.getElementById('stat-orders');
-const statTrades = document.getElementById('stat-trades');
-const tradeList = document.getElementById('trade-list');
+const barOrders = document.getElementById('bar-orders');
+const barTrades = document.getElementById('bar-trades');
+const tradesListBody = document.getElementById('trades-list-body');
+const openOrdersListBody = document.getElementById('open-orders-list-body');
+const openOrdersCount = document.getElementById('open-orders-count');
+const fixWireTerminal = document.getElementById('fix-wire-terminal');
 
-const depthCanvas = document.getElementById('depth-canvas');
-const ctx = depthCanvas.getContext('2d');
+const tabViewDepth = document.getElementById('tab-view-depth');
+const tabViewCandle = document.getElementById('tab-view-candle');
+const chartLegend = document.getElementById('chart-legend');
 
-const tabDepth = document.getElementById('tab-depth');
-const tabCandle = document.getElementById('tab-candle');
+const tabTradesFeed = document.getElementById('tab-trades-feed');
+const tabOpenOrders = document.getElementById('tab-open-orders');
+const tabFixLog = document.getElementById('tab-fix-log');
+const viewTradesStream = document.getElementById('view-trades-stream');
+const viewOpenOrders = document.getElementById('view-open-orders');
+const viewFixWire = document.getElementById('view-fix-wire');
 
-// Audio Toggle
-const audioToggleBtn = document.getElementById('audio-toggle-btn');
-audioToggleBtn.addEventListener('click', () => {
-    isAudioEnabled = !isAudioEnabled;
-    audioToggleBtn.textContent = isAudioEnabled ? '🔊 Audio ON' : '🔇 Audio MUTED';
-    audioToggleBtn.style.opacity = isAudioEnabled ? '1' : '0.5';
-});
+const mainTradingCanvas = document.getElementById('main-trading-canvas');
+const ctx = mainTradingCanvas.getContext('2d');
 
 // Modals
-const archModal = document.getElementById('arch-modal');
-const benchModal = document.getElementById('bench-modal');
-const fixModal = document.getElementById('fix-modal');
-const fixStreamContainer = document.getElementById('fix-stream-container');
+const modalArch = document.getElementById('modal-architecture');
+const modalBench = document.getElementById('modal-benchmark');
+document.getElementById('btn-open-arch').addEventListener('click', () => modalArch.classList.add('active'));
+document.getElementById('close-modal-arch').addEventListener('click', () => modalArch.classList.remove('active'));
+document.getElementById('btn-open-bench').addEventListener('click', () => modalBench.classList.add('active'));
+document.getElementById('close-modal-bench').addEventListener('click', () => modalBench.classList.remove('active'));
 
-document.getElementById('open-arch-btn').addEventListener('click', () => archModal.classList.add('show'));
-document.getElementById('close-arch-btn').addEventListener('click', () => archModal.classList.remove('show'));
-document.getElementById('open-bench-btn').addEventListener('click', () => benchModal.classList.add('show'));
-document.getElementById('close-bench-btn').addEventListener('click', () => benchModal.classList.remove('show'));
-document.getElementById('open-fix-btn').addEventListener('click', () => {
-    fixModal.classList.add('show');
-    renderFIXStream();
+// Audio Toggle
+const btnToggleAudio = document.getElementById('btn-toggle-audio');
+btnToggleAudio.addEventListener('click', () => {
+    isAudioEnabled = !isAudioEnabled;
+    btnToggleAudio.textContent = isAudioEnabled ? 'Audio: ON' : 'Audio: MUTED';
+    btnToggleAudio.style.color = isAudioEnabled ? 'var(--text-primary)' : 'var(--text-muted)';
 });
-document.getElementById('close-fix-btn').addEventListener('click', () => fixModal.classList.remove('show'));
 
-// Tabs
-tabDepth.addEventListener('click', () => {
-    currentViewTab = 'depth';
-    tabDepth.classList.add('active');
-    tabCandle.classList.remove('active');
-    fetchSnapshot();
-});
-tabCandle.addEventListener('click', () => {
-    currentViewTab = 'candle';
-    tabCandle.classList.add('active');
-    tabDepth.classList.remove('active');
+// Tab Switchers
+tabViewDepth.addEventListener('click', () => {
+    currentChartTab = 'depth';
+    tabViewDepth.classList.add('active');
+    tabViewCandle.classList.remove('active');
+    chartLegend.innerHTML = '<span class="legend-bid">■ Bid Depth</span><span class="legend-ask">■ Ask Depth</span>';
     fetchSnapshot();
 });
 
-tickSizeSelect.addEventListener('change', (e) => {
+tabViewCandle.addEventListener('click', () => {
+    currentChartTab = 'candle';
+    tabViewCandle.classList.add('active');
+    tabViewDepth.classList.remove('active');
+    chartLegend.innerHTML = '<span class="legend-bid">■ Bull Candle</span><span class="legend-ask">■ Bear Candle</span>';
+    fetchSnapshot();
+});
+
+tabTradesFeed.addEventListener('click', () => {
+    tabTradesFeed.classList.add('active');
+    tabOpenOrders.classList.remove('active');
+    tabFixLog.classList.remove('active');
+    viewTradesStream.classList.add('active');
+    viewOpenOrders.classList.remove('active');
+    viewFixWire.classList.remove('active');
+});
+
+tabOpenOrders.addEventListener('click', () => {
+    tabOpenOrders.classList.add('active');
+    tabTradesFeed.classList.remove('active');
+    tabFixLog.classList.remove('active');
+    viewOpenOrders.classList.add('active');
+    viewTradesStream.classList.remove('active');
+    viewFixWire.classList.remove('active');
+    renderOpenOrders();
+});
+
+tabFixLog.addEventListener('click', () => {
+    tabFixLog.classList.add('active');
+    tabTradesFeed.classList.remove('active');
+    tabOpenOrders.classList.remove('active');
+    viewFixWire.classList.add('active');
+    viewTradesStream.classList.remove('active');
+    viewOpenOrders.classList.remove('active');
+    renderFIXWire();
+});
+
+selectTickGroup.addEventListener('change', (e) => {
     currentTickSize = parseFloat(e.target.value);
     fetchSnapshot();
 });
 
 function resizeCanvas() {
-    depthCanvas.width = depthCanvas.parentElement.clientWidth;
-    depthCanvas.height = depthCanvas.parentElement.clientHeight;
+    mainTradingCanvas.width = mainTradingCanvas.parentElement.clientWidth;
+    mainTradingCanvas.height = mainTradingCanvas.parentElement.clientHeight;
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 // Side Toggle
-btnBuy.addEventListener('click', () => {
+btnSideBuy.addEventListener('click', () => {
     currentSide = 'BUY';
-    btnBuy.classList.add('active');
-    btnSell.classList.remove('active');
-    submitBtn.className = 'submit-order-btn buy-btn';
-    submitBtn.querySelector('span:first-child').textContent = 'TRANSMIT BUY ORDER';
+    btnSideBuy.className = 'side-action-btn buy-active';
+    btnSideSell.className = 'side-action-btn';
+    executeBtn.className = 'execute-order-btn buy-exec';
+    executeBtn.querySelector('.exec-primary-text').textContent = 'Place Buy Order';
 });
 
-btnSell.addEventListener('click', () => {
+btnSideSell.addEventListener('click', () => {
     currentSide = 'SELL';
-    btnSell.classList.add('active');
-    btnBuy.classList.remove('active');
-    submitBtn.className = 'submit-order-btn sell-btn';
-    submitBtn.querySelector('span:first-child').textContent = 'TRANSMIT SELL ORDER';
+    btnSideSell.className = 'side-action-btn sell-active';
+    btnSideBuy.className = 'side-action-btn';
+    executeBtn.className = 'execute-order-btn sell-exec';
+    executeBtn.querySelector('.exec-primary-text').textContent = 'Place Sell Order';
 });
 
 // Order Type Selection
 orderTypeSelect.addEventListener('change', (e) => {
     if (e.target.value === 'MARKET') {
-        priceGroup.style.opacity = '0.4';
+        priceFieldWrap.style.opacity = '0.35';
         orderPriceInput.disabled = true;
     } else {
-        priceGroup.style.opacity = '1';
+        priceFieldWrap.style.opacity = '1';
         orderPriceInput.disabled = false;
     }
 });
 
-// Stepper
-document.getElementById('price-up').addEventListener('click', () => {
+// Stepper Buttons
+document.getElementById('step-price-up').addEventListener('click', () => {
     orderPriceInput.value = (parseFloat(orderPriceInput.value) + currentTickSize).toFixed(2);
 });
-document.getElementById('price-down').addEventListener('click', () => {
+document.getElementById('step-price-down').addEventListener('click', () => {
     orderPriceInput.value = Math.max(0.01, parseFloat(orderPriceInput.value) - currentTickSize).toFixed(2);
 });
 
-// Symbol Selection
+// Quantity Quick Percentage Select
+document.querySelectorAll('.pct-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const pct = parseFloat(btn.getAttribute('data-pct'));
+        orderQtyInput.value = Math.round(500 * pct);
+    });
+});
+
+// Instrument Selection
 symbolBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         symbolBtns.forEach(b => b.classList.remove('active'));
@@ -466,6 +503,7 @@ symbolBtns.forEach(btn => {
         currentSymbol = btn.getAttribute('data-symbol');
         orderPriceInput.value = currentSymbol === 'NIFTY50' ? '195.00' : currentSymbol === 'BANKNIFTY' ? '442.00' : '250.00';
         fetchSnapshot();
+        renderOpenOrders();
     });
 });
 
@@ -493,47 +531,54 @@ orderForm.addEventListener('submit', async (e) => {
     fetchSnapshot();
     fetchTrades();
     fetchStats();
-    renderWorkingOrders();
+    renderOpenOrders();
 });
 
-// Cancel Order action
+// Cancel Order
 window.cancelOrder = function(id) {
     playClickSound();
     clientBooks[currentSymbol].cancelOrder(id);
     fetchSnapshot();
-    renderWorkingOrders();
+    renderOpenOrders();
+    renderFIXWire();
 };
 
-function renderWorkingOrders() {
+function renderOpenOrders() {
     const list = clientBooks[currentSymbol].userWorkingOrders;
-    workingCount.textContent = list.length;
+    openOrdersCount.textContent = list.length;
     if (list.length === 0) {
-        workingOrdersList.innerHTML = '<div class="empty-orders-msg">No resting orders in queue</div>';
+        openOrdersListBody.innerHTML = '<div class="empty-state-row">No active resting orders in queue</div>';
         return;
     }
     let html = '';
     list.forEach(o => {
-        const sideClass = o.side === 'BUY' ? 'buy-item' : 'sell-item';
+        const sideColor = o.side === 'BUY' ? 'color: var(--color-buy)' : 'color: var(--color-sell)';
         html += `
-            <div class="working-order-item ${sideClass}">
-                <span><strong>${o.side}</strong> ${o.qty} @ $${(o.price / 100).toFixed(2)}</span>
-                <button class="cancel-ord-btn" onclick="cancelOrder(${o.id})">Cancel</button>
+            <div class="order-row-item">
+                <span>#${o.id}</span>
+                <span style="${sideColor}; font-weight:600">${o.side}</span>
+                <span>${o.type}</span>
+                <span>$${(o.price / 100).toFixed(2)}</span>
+                <span>${o.qty}</span>
+                <div class="col-right">
+                    <button class="order-cancel-btn" onclick="cancelOrder(${o.id})">Cancel</button>
+                </div>
             </div>
         `;
     });
-    workingOrdersList.innerHTML = html;
+    openOrdersListBody.innerHTML = html;
 }
 
-// HFT Burst Simulation
-document.getElementById('sim-burst-100').addEventListener('click', () => runHFTBurst(100));
-document.getElementById('sim-burst-1000').addEventListener('click', () => runHFTBurst(1000));
+// Algorithmic HFT simulation
+document.getElementById('btn-burst-100').addEventListener('click', () => runHFTBurst(100));
+document.getElementById('btn-burst-1000').addEventListener('click', () => runHFTBurst(1000));
 
 async function runHFTBurst(count) {
     playClickSound();
     const mid = parseFloat(orderPriceInput.value);
     for (let i = 0; i < count; i++) {
         const side = Math.random() > 0.5 ? 'BUY' : 'SELL';
-        const offset = (Math.floor(Math.random() * 20) - 10) * currentTickSize;
+        const offset = (Math.floor(Math.random() * 16) - 8) * currentTickSize;
         const price = Math.round((mid + offset) * 100);
         const qty = Math.floor(Math.random() * 150) + 10;
         const type = Math.random() > 0.88 ? 'MARKET' : 'LIMIT';
@@ -545,21 +590,19 @@ async function runHFTBurst(count) {
     fetchStats();
 }
 
-// Auto Market Maker Toggle
-const toggleBtn = document.getElementById('sim-toggle-stream');
+// Auto Market Maker
+const toggleBtn = document.getElementById('btn-toggle-mm');
 toggleBtn.addEventListener('click', () => {
     isAutoMMRunning = !isAutoMMRunning;
     if (isAutoMMRunning) {
-        toggleBtn.textContent = '⏸ Stop Auto MM';
-        toggleBtn.style.background = 'rgba(255, 51, 102, 0.2)';
-        toggleBtn.style.borderColor = 'var(--ask-red)';
-        toggleBtn.style.color = 'var(--ask-red)';
-        autoMMInterval = setInterval(() => runHFTBurst(15), 250);
+        toggleBtn.textContent = 'Stop Auto Market Maker';
+        toggleBtn.style.color = 'var(--color-sell)';
+        toggleBtn.style.borderColor = 'var(--color-sell)';
+        autoMMInterval = setInterval(() => runHFTBurst(15), 200);
     } else {
-        toggleBtn.textContent = '▶ Auto Market Maker';
-        toggleBtn.style.background = 'transparent';
-        toggleBtn.style.borderColor = 'var(--bid-green)';
-        toggleBtn.style.color = 'var(--bid-green)';
+        toggleBtn.textContent = 'Start Auto Market Maker';
+        toggleBtn.style.color = 'var(--color-cyan)';
+        toggleBtn.style.borderColor = 'var(--border-strong)';
         clearInterval(autoMMInterval);
     }
 });
@@ -567,7 +610,7 @@ toggleBtn.addEventListener('click', () => {
 function fetchSnapshot() {
     const data = clientBooks[currentSymbol].getSnapshot(12, currentTickSize);
     renderOrderBook(data);
-    if (currentViewTab === 'depth') {
+    if (currentChartTab === 'depth') {
         drawDepthChart(data);
     } else {
         drawCandlestickChart(clientBooks[currentSymbol].candles);
@@ -585,8 +628,8 @@ function fetchStats() {
         totalOrders += b.processedOrders;
         totalTrades += b.executedTrades;
     });
-    statOrders.textContent = totalOrders.toLocaleString();
-    statTrades.textContent = totalTrades.toLocaleString();
+    barOrders.textContent = totalOrders.toLocaleString();
+    barTrades.textContent = totalTrades.toLocaleString();
 }
 
 function renderOrderBook(data) {
@@ -603,48 +646,49 @@ function renderOrderBook(data) {
     const bestBid = data.best_bid ? (data.best_bid / 100).toFixed(2) : '--';
     const bestAsk = data.best_ask ? (data.best_ask / 100).toFixed(2) : '--';
     const spread = data.spread ? (data.spread / 100).toFixed(2) : '0.00';
-    const mid = (data.best_bid && data.best_ask) ? ((data.best_bid + data.best_ask) / 200).toFixed(2) : '--';
+    const mid = (data.best_bid && data.best_ask) ? ((data.best_bid + data.best_ask) / 200).toFixed(2) : '19,500.00';
 
-    bestBidVal.textContent = `$${bestBid}`;
-    bestAskVal.textContent = `$${bestAsk}`;
-    spreadVal.textContent = `$${spread}`;
-    spreadBadgeVal.textContent = `SPREAD: $${spread}`;
-    midVal.textContent = `$${mid}`;
+    midPriceDisplay.textContent = `${mid}`;
+    spreadAmount.textContent = `${spread}`;
+    const bps = data.best_bid ? ((data.spread / data.best_bid) * 10000).toFixed(2) : '0.00';
+    spreadBps.textContent = `${bps} bps`;
 
+    // Asks Ladder
     let askRows = '';
     let runningAskCum = 0;
-    const reversedAsks = [...asks].slice(0, 10).reverse();
+    const reversedAsks = [...asks].slice(0, 11).reverse();
     reversedAsks.forEach(a => {
         runningAskCum += a.qty;
         const pct = Math.min(100, (runningAskCum / maxCumulative) * 100);
         askRows += `
-            <div class="ob-row" onclick="fillPrice(${a.price / 100})">
-                <div class="ob-bar" style="width: ${pct}%"></div>
-                <span class="price-cell">$${(a.price / 100).toFixed(2)}</span>
-                <span class="text-right">${a.qty.toLocaleString()}</span>
-                <span class="text-right text-muted">${a.orders}</span>
-                <span class="text-right text-muted">${runningAskCum.toLocaleString()}</span>
+            <div class="ob-line-row" onclick="fillPrice(${a.price / 100})">
+                <div class="ob-depth-bar" style="width: ${pct}%"></div>
+                <span class="price-num">${(a.price / 100).toFixed(2)}</span>
+                <span class="col-qty">${a.qty.toLocaleString()}</span>
+                <span class="col-orders" style="color: var(--text-muted)">1</span>
+                <span class="col-total" style="color: var(--text-muted)">${runningAskCum.toLocaleString()}</span>
             </div>
         `;
     });
-    asksLadder.innerHTML = askRows;
+    asksStream.innerHTML = askRows;
 
+    // Bids Ladder
     let bidRows = '';
     let runningBidCum = 0;
-    bids.slice(0, 10).forEach(b => {
+    bids.slice(0, 11).forEach(b => {
         runningBidCum += b.qty;
         const pct = Math.min(100, (runningBidCum / maxCumulative) * 100);
         bidRows += `
-            <div class="ob-row" onclick="fillPrice(${b.price / 100})">
-                <div class="ob-bar" style="width: ${pct}%"></div>
-                <span class="price-cell">$${(b.price / 100).toFixed(2)}</span>
-                <span class="text-right">${b.qty.toLocaleString()}</span>
-                <span class="text-right text-muted">${b.orders}</span>
-                <span class="text-right text-muted">${runningBidCum.toLocaleString()}</span>
+            <div class="ob-line-row" onclick="fillPrice(${b.price / 100})">
+                <div class="ob-depth-bar" style="width: ${pct}%"></div>
+                <span class="price-num">${(b.price / 100).toFixed(2)}</span>
+                <span class="col-qty">${b.qty.toLocaleString()}</span>
+                <span class="col-orders" style="color: var(--text-muted)">1</span>
+                <span class="col-total" style="color: var(--text-muted)">${runningBidCum.toLocaleString()}</span>
             </div>
         `;
     });
-    bidsLadder.innerHTML = bidRows;
+    bidsStream.innerHTML = bidRows;
 }
 
 function fillPrice(price) {
@@ -654,35 +698,35 @@ function fillPrice(price) {
 function renderTrades(trades) {
     if (!trades || trades.length === 0) return;
     let html = '';
-    trades.slice(0, 18).forEach(t => {
+    trades.slice(0, 16).forEach(t => {
         const timeStr = new Date(Number(t.ts / 1000000n)).toLocaleTimeString();
-        const sideClass = t.side === 'BUY' ? 'buy-taker' : 'sell-taker';
+        const sideClass = t.side === 'BUY' ? 'buy-fill' : 'sell-fill';
         html += `
-            <div class="trade-row ${sideClass}">
-                <span class="text-muted">${timeStr}</span>
-                <span class="price-cell">$${(t.price / 100).toFixed(2)}</span>
-                <span class="text-right">${t.qty}</span>
-                <span class="text-right text-muted">#${t.maker} / #${t.taker}</span>
+            <div class="trade-row-item ${sideClass}">
+                <span style="color: var(--text-muted)">${timeStr}</span>
+                <span class="p-cell">${(t.price / 100).toFixed(2)}</span>
+                <span class="col-right">${t.qty}</span>
+                <span class="col-right" style="color: var(--text-muted)">#${t.maker} / #${t.taker}</span>
             </div>
         `;
     });
-    tradeList.innerHTML = html;
+    tradesListBody.innerHTML = html;
 }
 
-function renderFIXStream() {
+function renderFIXWire() {
     const list = clientBooks[currentSymbol].fixMessages;
     let html = '';
     list.forEach(m => {
         const parts = m.raw.split('|');
-        const formatted = parts.map(p => `<span class="fix-tag">${p}</span>`).join('<span class="fix-delim">|</span>');
-        html += `<div class="fix-log-entry"><span class="text-muted">[${m.time}]</span> ${formatted}</div>`;
+        const formatted = parts.map(p => `<span class="fix-t">${p}</span>`).join('<span class="fix-d">|</span>');
+        html += `<div class="fix-line"><span style="color: var(--text-muted)">[${m.time}]</span> ${formatted}</div>`;
     });
-    fixStreamContainer.innerHTML = html;
+    fixWireTerminal.innerHTML = html;
 }
 
 function drawDepthChart(data) {
-    const width = depthCanvas.width;
-    const height = depthCanvas.height;
+    const width = mainTradingCanvas.width;
+    const height = mainTradingCanvas.height;
     ctx.clearRect(0, 0, width, height);
 
     const bids = data.bids || [];
@@ -704,40 +748,52 @@ function drawDepthChart(data) {
     const maxCum = Math.max(bidCum, askCum, 1);
     const midX = width / 2;
 
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.lineWidth = 1;
+    for (let y = 30; y < height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+    }
+
+    // Bids Curve
     ctx.beginPath();
     ctx.moveTo(midX, height);
     for (let i = 0; i < bidPoints.length; i++) {
         const x = midX - ((i + 1) / Math.max(bidPoints.length, 1)) * (width / 2);
-        const y = height - (bidPoints[i].cum / maxCum) * (height - 20);
+        const y = height - (bidPoints[i].cum / maxCum) * (height - 24);
         ctx.lineTo(x, y);
     }
     ctx.lineTo(0, height);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(0, 245, 155, 0.2)';
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
     ctx.fill();
-    ctx.strokeStyle = '#00f59b';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
+    // Asks Curve
     ctx.beginPath();
     ctx.moveTo(midX, height);
     for (let i = 0; i < askPoints.length; i++) {
         const x = midX + ((i + 1) / Math.max(askPoints.length, 1)) * (width / 2);
-        const y = height - (askPoints[i].cum / maxCum) * (height - 20);
+        const y = height - (askPoints[i].cum / maxCum) * (height - 24);
         ctx.lineTo(x, y);
     }
     ctx.lineTo(width, height);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(255, 51, 102, 0.2)';
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.12)';
     ctx.fill();
-    ctx.strokeStyle = '#ff3366';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 }
 
 function drawCandlestickChart(candles) {
-    const width = depthCanvas.width;
-    const height = depthCanvas.height;
+    const width = mainTradingCanvas.width;
+    const height = mainTradingCanvas.height;
     ctx.clearRect(0, 0, width, height);
     if (!candles || candles.length === 0) return;
 
@@ -749,6 +805,16 @@ function drawCandlestickChart(candles) {
     });
     const priceRange = Math.max(maxPrice - minPrice, 0.50);
 
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.lineWidth = 1;
+    for (let y = 30; y < height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+    }
+
     const candleWidth = Math.max(4, (width / candles.length) - 4);
     candles.forEach((c, idx) => {
         const x = idx * (width / candles.length) + (candleWidth / 2);
@@ -758,26 +824,26 @@ function drawCandlestickChart(candles) {
         const yLow = height - ((c.low - minPrice) / priceRange) * (height - 30) - 15;
 
         const isGreen = c.close >= c.open;
-        ctx.strokeStyle = isGreen ? '#00f59b' : '#ff3366';
-        ctx.fillStyle = isGreen ? '#00f59b' : '#ff3366';
+        ctx.strokeStyle = isGreen ? '#10b981' : '#ef4444';
+        ctx.fillStyle = isGreen ? '#10b981' : '#ef4444';
 
-        // Draw Wick
+        // Wick
         ctx.beginPath();
         ctx.moveTo(x, yHigh);
         ctx.lineTo(x, yLow);
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Draw Body
+        // Body
         const top = Math.min(yOpen, yClose);
         const bodyHeight = Math.max(Math.abs(yClose - yOpen), 2);
         ctx.fillRect(x - candleWidth / 2, top, candleWidth, bodyHeight);
     });
 }
 
-// In-Browser Benchmark Runner
-document.getElementById('run-bench-action-btn').addEventListener('click', () => {
-    const btn = document.getElementById('run-bench-action-btn');
+// In-Browser Benchmark Profiler
+document.getElementById('btn-start-profiler').addEventListener('click', () => {
+    const btn = document.getElementById('btn-start-profiler');
     btn.textContent = 'RUNNING 50,000 MATCHES...';
     btn.disabled = true;
 
@@ -808,22 +874,22 @@ document.getElementById('run-bench-action-btn').addEventListener('click', () => 
         const p50 = latenciesUs[Math.floor(N * 0.5)].toFixed(2);
         const p99 = latenciesUs[Math.floor(N * 0.99)].toFixed(2);
 
-        document.getElementById('b-tps').textContent = `${tps.toLocaleString()} ops/s`;
-        document.getElementById('b-avg').textContent = `${avg} µs`;
-        document.getElementById('b-p50').textContent = `${p50} µs`;
-        document.getElementById('b-p99').textContent = `${p99} µs`;
+        document.getElementById('res-tps').textContent = `${tps.toLocaleString()} ops/s`;
+        document.getElementById('res-avg').textContent = `${avg} µs`;
+        document.getElementById('res-p50').textContent = `${p50} µs`;
+        document.getElementById('res-p99').textContent = `${p99} µs`;
 
-        document.getElementById('bench-results').style.display = 'block';
-        btn.textContent = '▶ RUN AGAIN';
+        document.getElementById('profiler-stats-grid').style.display = 'grid';
+        btn.textContent = 'RUN AGAIN';
         btn.disabled = false;
     }, 50);
 });
 
-// Initial tick
+// Periodic Cycle
 fetchSnapshot();
 fetchTrades();
 fetchStats();
-renderWorkingOrders();
+renderOpenOrders();
 setInterval(() => {
     fetchSnapshot();
     fetchTrades();
