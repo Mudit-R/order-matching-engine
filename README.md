@@ -9,56 +9,56 @@ An institutional-grade, zero-allocation, deterministic **Limit Order Book (LOB) 
 
 ---
 
-## 🏛️ System Architecture
+## ️ System Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Network["1. Ingestion Layer"]
-        FIX["FIX 4.2 Gateway<br/>(Tag-Value 35=D/F)"]
-        DMA["DMA REST/WS Gateway<br/>(Binary Frames)"]
-        SIM["HFT Poisson Burst<br/>Simulator"]
-    end
+ subgraph Network["1. Ingestion Layer"]
+ FIX["FIX 4.2 Gateway<br/>(Tag-Value 35=D/F)"]
+ DMA["DMA REST/WS Gateway<br/>(Binary Frames)"]
+ SIM["HFT Poisson Burst<br/>Simulator"]
+ end
 
-    subgraph RingBuffer["2. Inter-Thread Transport (Lock-Free)"]
-        SPSC["Cache-Padded (64B) SPSC Ring Buffer<br/>1,048,576 Slots | Atomic Acquire/Release"]
-    end
+ subgraph RingBuffer["2. Inter-Thread Transport (Lock-Free)"]
+ SPSC["Cache-Padded (64B) SPSC Ring Buffer<br/>1,048,576 Slots | Atomic Acquire/Release"]
+ end
 
-    subgraph Core["3. Core Matching Engine (Thread Pinned)"]
-        WAL["Binary Append-Only WAL<br/>(Zero-Loss Event Sourcing)"]
-        POOL["Zero-Allocation ObjectPool&lt;Order&gt;"]
+ subgraph Core["3. Core Matching Engine (Thread Pinned)"]
+ WAL["Binary Append-Only WAL<br/>(Zero-Loss Event Sourcing)"]
+ POOL["Zero-Allocation ObjectPool&lt;Order&gt;"]
         
-        subgraph LOB["Continuous Double Auction Book"]
-            BIDS["Bids (Price-Desc Red-Black Map)<br/>Intrusive FIFO Doubly-Linked Lists"]
-            ASKS["Asks (Price-Asc Red-Black Map)<br/>Intrusive FIFO Doubly-Linked Lists"]
-        end
+ subgraph LOB["Continuous Double Auction Book"]
+ BIDS["Bids (Price-Desc Red-Black Map)<br/>Intrusive FIFO Doubly-Linked Lists"]
+ ASKS["Asks (Price-Asc Red-Black Map)<br/>Intrusive FIFO Doubly-Linked Lists"]
+ end
         
-        MATCH["Matching Rules Core:<br/>• Price-Time FIFO Execution<br/>• Iceberg Order Tranche Replenish<br/>• Post-Only (Maker) Routing<br/>• Self-Trade Prevention (STP)<br/>• GTC / IOC / FOK Order Types"]
-    end
+ MATCH["Matching Rules Core:<br/>• Price-Time FIFO Execution<br/>• Iceberg Order Tranche Replenish<br/>• Post-Only (Maker) Routing<br/>• Self-Trade Prevention (STP)<br/>• GTC / IOC / FOK Order Types"]
+ end
 
-    subgraph Outbound["4. Market Data & Execution Feed"]
-        L2["Level-2 Aggregated Depth Gateway<br/>(12-Level Volume Ladders)"]
-        EXEC["FIX 4.2 Execution Reports (35=8)<br/>(Fills, Partial Fills, Cancels)"]
-        WEB["Borderless Sleek Trading Terminal<br/>(Canvas Depth + 1m Candlesticks)"]
-    end
+ subgraph Outbound["4. Market Data & Execution Feed"]
+ L2["Level-2 Aggregated Depth Gateway<br/>(12-Level Volume Ladders)"]
+ EXEC["FIX 4.2 Execution Reports (35=8)<br/>(Fills, Partial Fills, Cancels)"]
+ WEB["Borderless Sleek Trading Terminal<br/>(Canvas Depth + 1m Candlesticks)"]
+ end
 
-    FIX --> SPSC
-    DMA --> SPSC
-    SIM --> SPSC
+ FIX --> SPSC
+ DMA --> SPSC
+ SIM --> SPSC
     
-    SPSC --> WAL
-    SPSC --> POOL
-    POOL --> MATCH
-    MATCH <--> LOB
+ SPSC --> WAL
+ SPSC --> POOL
+ POOL --> MATCH
+ MATCH <--> LOB
     
-    MATCH --> L2
-    MATCH --> EXEC
-    L2 --> WEB
-    EXEC --> WEB
+ MATCH --> L2
+ MATCH --> EXEC
+ L2 --> WEB
+ EXEC --> WEB
 ```
 
 ---
 
-## ⚡ Key Hardware & Microarchitectural Optimizations
+##  Key Hardware & Microarchitectural Optimizations
 
 ### 1. Intrusive Doubly-Linked Lists ($O(1)$ Queue Operations)
 Standard `std::list` incurs heap allocation overhead and cache pointer indirection. NexusEngine uses **intrusive pointers** embedded directly within the 64-byte cache-aligned `Order` struct (`prev` and `next`).
@@ -80,7 +80,7 @@ All dynamic allocations during matching are eliminated. An `ObjectPool<Order>` p
 
 ---
 
-## 🏦 Institutional Exchange Mechanics Implemented
+##  Institutional Exchange Mechanics Implemented
 
 | Feature | Exchange Specification & Implementation Behavior |
 | :--- | :--- |
@@ -93,7 +93,7 @@ All dynamic allocations during matching are eliminated. An `ObjectPool<Order>` p
 
 ---
 
-## 📊 Benchmark Latency & Throughput Distribution
+##  Benchmark Latency & Throughput Distribution
 
 Run on AMD Ryzen / Intel Core CPU under 1,000,000 continuous double-auction limit & market order operations:
 
@@ -108,7 +108,7 @@ Run on AMD Ryzen / Intel Core CPU under 1,000,000 continuous double-auction limi
 
 ---
 
-## 🛠️ Project Structure
+## ️ Project Structure
 
 ```
 ├── include/
@@ -142,7 +142,7 @@ Run on AMD Ryzen / Intel Core CPU under 1,000,000 continuous double-auction limi
 
 ---
 
-## 🚀 Quickstart & Verification
+##  Quickstart & Verification
 
 ### 1. Build and Run C++20 Core & Test Suites
 ```bash
@@ -174,11 +174,11 @@ java -cp bin com.engine.benchmark.ThroughputBenchmark
 
 ### 3. Run Live Web Terminal
 Open `index.html` in any modern browser, or visit the live deployment at:  
-👉 **[https://order-matching-book-engine.vercel.app/](https://order-matching-book-engine.vercel.app/)**
+ **[https://order-matching-book-engine.vercel.app/](https://order-matching-book-engine.vercel.app/)**
 
 ---
 
-## 🎯 Interview Deep-Dive: Common Systems & HFT Questions
+##  Interview Deep-Dive: Common Systems & HFT Questions
 
 <details>
 <summary><b>1. How does NexusEngine achieve O(1) order cancellation without searching?</b></summary>
@@ -197,5 +197,5 @@ According to standard exchange rules (CME, NASDAQ, NSE), only the currently disp
 
 ---
 
-## 📜 License
+##  License
 MIT License. Built by **Mudit Rungta** for high-throughput distributed systems and low-latency exchange infrastructure.
