@@ -3,97 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusEngine | Institutional Limit Order Book & Execution Terminal</title>
-    <meta name="description" content="Ultra low-latency C++20 limit order book and matching engine trading terminal.">
+    <title>NexusEngine | Institutional Trading Terminal & Order Matching Core</title>
+    <meta name="description" content="Robinhood-inspired institutional execution terminal powered by an ultra low-latency C++20 limit order book.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Top Seamless Header -->
-        <header class="app-header">
-            <div class="header-left">
-                <div class="brand-group">
-                    <span class="brand-mark"></span>
-                    <span class="brand-name">NEXUS<span class="brand-glow">ENGINE</span></span>
-                    <span class="badge-tag">LOB v2.5</span>
+    <!-- Top Minimalist Institutional Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="brand-group" id="brand-logo">
+                <span class="brand-name">NEXUS<span class="brand-accent">ENGINE</span></span>
+                <span class="brand-badge">CORE v2.5</span>
+            </div>
+
+            <div class="instrument-select-wrap">
+                <select id="symbol-select" class="instrument-dropdown">
+                    <option value="NIFTY50" selected>NIFTY 50 • $195.00</option>
+                    <option value="BANKNIFTY">BANK NIFTY • $442.00</option>
+                    <option value="RELIANCE">RELIANCE IND • $250.00</option>
+                </select>
+            </div>
+
+            <div class="engine-telemetry-chip">
+                <span class="live-dot"></span>
+                <span class="telemetry-text">0.16 µs Core SLA <span class="dim">•</span> P99: 0.50 µs</span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <button class="pill-btn burst-btn" id="btn-burst-1000">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                <span>+1,000 Burst</span>
+            </button>
+            <button class="pill-btn" id="btn-toggle-sim">Auto MM: OFF</button>
+            <button class="pill-btn" id="btn-open-fix">FIX 4.2 Wire</button>
+            <button class="pill-btn" id="btn-open-bench">50k Benchmark</button>
+            <button class="pill-btn" id="btn-toggle-audio">Audio: ON</button>
+            <a href="https://github.com/Mudit-R/order-matching-engine" target="_blank" class="pill-btn github-btn" title="View Source on GitHub">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                <span>GitHub</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Robinhood Stage (Left 70% Chart & Blotter, Right 30% Order Ticket & L2) -->
+    <main class="main-terminal">
+        <!-- LEFT COLUMN: Hero Asset Header + Chart Stage + Blotter -->
+        <section class="left-stage">
+            <!-- Asset Hero Header -->
+            <div class="asset-hero-bar">
+                <div class="hero-info">
+                    <span class="asset-category">INDEX • LIVE ORDER BOOK</span>
+                    <h1 class="asset-title" id="active-asset-title">NIFTY 50</h1>
+                    <div class="hero-price-line">
+                        <span class="hero-price mono" id="hero-display-price">$195.00</span>
+                        <span class="hero-change-pill" id="hero-display-change">+$4.20 (+2.15%) Today</span>
+                    </div>
                 </div>
 
-                <div class="market-nav">
-                    <button class="nav-market-btn active" data-symbol="NIFTY50">
-                        <span class="m-sym">NIFTY50</span>
-                        <span class="m-val" id="hdr-price-nifty">19,500.00</span>
-                    </button>
-                    <button class="nav-market-btn" data-symbol="BANKNIFTY">
-                        <span class="m-sym">BANKNIFTY</span>
-                        <span class="m-val" id="hdr-price-bank">44,200.00</span>
-                    </button>
-                    <button class="nav-market-btn" data-symbol="RELIANCE">
-                        <span class="m-sym">RELIANCE</span>
-                        <span class="m-val" id="hdr-price-rel">2,500.00</span>
-                    </button>
+                <div class="hero-stats-strip">
+                    <div class="quick-stat">
+                        <span class="quick-stat-lbl">Processed Orders</span>
+                        <span class="quick-stat-val mono" id="stat-total-orders">0</span>
+                    </div>
+                    <div class="quick-stat">
+                        <span class="quick-stat-lbl">Matched Trades</span>
+                        <span class="quick-stat-val mono" id="stat-total-trades">0</span>
+                    </div>
+                    <div class="quick-stat">
+                        <span class="quick-stat-lbl">FIFO Execution</span>
+                        <span class="quick-stat-val val-green">Lock-Free</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="header-ticker">
-                <div class="ticker-box">
-                    <span class="tb-label">Engine Latency</span>
-                    <span class="tb-val glow-mint">0.16 µs (P99: 0.50µs)</span>
+            <!-- Chart Toolbar (Robinhood Timeframe Pills & Modes) -->
+            <div class="chart-toolbar">
+                <div class="timeframe-group">
+                    <button class="timeframe-pill active" data-tf="1D">1D</button>
+                    <button class="timeframe-pill" data-tf="1W">1W</button>
+                    <button class="timeframe-pill" data-tf="1M">1M</button>
+                    <button class="timeframe-pill" data-tf="3M">3M</button>
+                    <button class="timeframe-pill" data-tf="1Y">1Y</button>
+                    <button class="timeframe-pill" data-tf="ALL">ALL</button>
                 </div>
-                <div class="ticker-box">
-                    <span class="tb-label">Processed Orders</span>
-                    <span class="tb-val" id="stat-total-orders">0</span>
-                </div>
-                <div class="ticker-box">
-                    <span class="tb-label">Matched Trades</span>
-                    <span class="tb-val" id="stat-total-trades">0</span>
+
+                <div class="chart-view-group">
+                    <button class="chart-mode-tab active" id="tab-chart-line">Robinhood Line</button>
+                    <button class="chart-mode-tab" id="tab-chart-candle">Candlesticks</button>
+                    <button class="chart-mode-tab" id="tab-chart-depth">Depth Curve</button>
                 </div>
             </div>
 
-            <div class="header-right">
-                <button class="action-pill-btn glow-action" id="btn-burst-1000">+1,000 Burst</button>
-                <button class="action-pill-btn" id="btn-toggle-sim">Auto MM</button>
-                <button class="action-pill-btn" id="btn-open-fix">FIX 4.2</button>
-                <button class="action-pill-btn" id="btn-open-bench">Benchmark</button>
-                <button class="action-pill-btn" id="btn-toggle-audio">Audio: ON</button>
-                <a href="https://github.com/Mudit-R/order-matching-engine" target="_blank" class="github-pill">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                    <span>GitHub</span>
-                </a>
+            <!-- Canvas Chart Stage -->
+            <div class="canvas-container" id="canvas-container">
+                <canvas id="trading-canvas"></canvas>
             </div>
-        </header>
 
-        <!-- Main Borderless Trading Layout -->
-        <main class="trading-layout">
-            <!-- COLUMN 1: Order Placement Pod (Seamless Recessed Slab) -->
-            <aside class="slab-card order-entry-slab">
-                <div class="slab-header">
-                    <span class="slab-title">ORDER ENTRY</span>
-                    <span class="slab-sub">DMA SPSC</span>
+            <!-- Docked Blotter Section -->
+            <div class="blotter-section">
+                <div class="blotter-tab-bar">
+                    <button class="blotter-tab active" data-tab="working">
+                        <span>Working Orders</span>
+                        <span class="tab-badge mono" id="working-count">0</span>
+                    </button>
+                    <button class="blotter-tab" data-tab="trades">
+                        <span>Executed Trades</span>
+                    </button>
+                    <button class="blotter-tab" data-tab="fix">
+                        <span>FIX 4.2 Stream</span>
+                    </button>
+                    <button class="blotter-tab" data-tab="telemetry">
+                        <span>Latency Telemetry</span>
+                    </button>
                 </div>
 
-                <div class="side-toggle-track">
-                    <button type="button" class="side-pill-btn active-buy" id="btn-side-buy">BUY</button>
-                    <button type="button" class="side-pill-btn" id="btn-side-sell">SELL</button>
-                </div>
+                <div class="blotter-content-area">
+                    <!-- Working Orders View -->
+                    <div class="blotter-pane" id="view-tab-working">
+                        <table class="blotter-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Side</th>
+                                    <th>Type</th>
+                                    <th>Price</th>
+                                    <th>Contracts</th>
+                                    <th>STP Guard</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="working-orders-stream">
+                                <tr><td colspan="7" class="empty-state">No active working orders on the book</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-                <form id="order-form" class="order-form-body">
-                    <div class="form-grid-2">
-                        <div class="input-cell">
-                            <label for="order-type">Type</label>
-                            <select id="order-type" class="recessed-select">
-                                <option value="LIMIT">Limit (GTC)</option>
-                                <option value="MARKET">Market</option>
-                                <option value="POST_ONLY">Post-Only</option>
-                                <option value="IOC">IOC</option>
-                                <option value="FOK">FOK</option>
-                            </select>
+                    <!-- Executed Trades View -->
+                    <div class="blotter-pane" id="view-tab-trades" style="display:none;">
+                        <table class="blotter-table">
+                            <thead>
+                                <tr>
+                                    <th>Execution Time</th>
+                                    <th>Side</th>
+                                    <th>Fill Price</th>
+                                    <th>Qty Filled</th>
+                                    <th>Engine Mode</th>
+                                    <th>Latency</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blotter-trades-stream">
+                                <tr><td colspan="6" class="empty-state">No executed trades yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- FIX Wire Stream View -->
+                    <div class="blotter-pane" id="view-tab-fix" style="display:none; padding:12px;">
+                        <div class="fix-stream-box" id="inline-fix-feed">
+                            <div class="fix-row"><span class="fix-time">[INIT]</span> 8=FIX.4.2|35=A|49=CLIENT|56=NEXUS|98=0|108=30|10=000</div>
                         </div>
-                        <div class="input-cell">
-                            <label for="stp-mode">STP</label>
-                            <select id="stp-mode" class="recessed-select">
+                    </div>
+
+                    <!-- Latency Telemetry View -->
+                    <div class="blotter-pane" id="view-tab-telemetry" style="display:none; padding:16px;">
+                        <div class="telemetry-cards-row">
+                            <div class="telemetry-card">
+                                <span class="tc-lbl">Core P50 Latency</span>
+                                <span class="tc-val mono val-green">0.16 µs</span>
+                                <span class="tc-sub">Single-digit CPU cycles</span>
+                            </div>
+                            <div class="telemetry-card">
+                                <span class="tc-lbl">Tail P99 Latency</span>
+                                <span class="tc-val mono val-green">0.50 µs</span>
+                                <span class="tc-sub">Zero-pause execution</span>
+                            </div>
+                            <div class="telemetry-card">
+                                <span class="tc-lbl">Ring Buffer (SPSC)</span>
+                                <span class="tc-val mono val-accent">1,048,576 Slots</span>
+                                <span class="tc-sub">64-byte cacheline aligned</span>
+                            </div>
+                            <div class="telemetry-card">
+                                <span class="tc-lbl">Memory Allocation</span>
+                                <span class="tc-val mono val-blue">Zero GC</span>
+                                <span class="tc-sub">Pre-allocated object pool</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: Signature Robinhood Order Ticket & Level 2 Depth -->
+        <aside class="right-rail">
+            <!-- Robinhood Order Ticket Card -->
+            <div class="order-ticket-card">
+                <div class="ticket-header-tabs">
+                    <button type="button" class="side-pill-btn active-buy" id="btn-side-buy">Buy</button>
+                    <button type="button" class="side-pill-btn" id="btn-side-sell">Sell</button>
+                </div>
+
+                <div class="order-type-tabs">
+                    <button type="button" class="type-tab active" data-type="LIMIT">Limit</button>
+                    <button type="button" class="type-tab" data-type="MARKET">Market</button>
+                    <button type="button" class="type-tab" data-type="ICEBERG">Iceberg</button>
+                    <button type="button" class="type-tab" data-type="POST_ONLY">Post-Only</button>
+                    <button type="button" class="type-tab" data-type="IOC">IOC</button>
+                </div>
+
+                <select id="order-type" style="display:none;">
+                    <option value="LIMIT">Limit</option>
+                    <option value="MARKET">Market</option>
+                    <option value="ICEBERG">Iceberg</option>
+                    <option value="POST_ONLY">Post-Only</option>
+                    <option value="IOC">IOC</option>
+                </select>
+
+                <form id="order-form" class="ticket-form">
+                    <!-- Price Row -->
+                    <div class="ticket-row" id="price-input-cell">
+                        <label class="ticket-lbl" for="order-price">Limit Price</label>
+                        <div class="ticket-input-wrap">
+                            <span class="currency-prefix">$</span>
+                            <input type="number" id="order-price" class="ticket-input mono" value="195.00" step="0.05" min="0.01">
+                            <div class="stepper-controls">
+                                <button type="button" id="step-price-up" class="step-btn">▲</button>
+                                <button type="button" id="step-price-down" class="step-btn">▼</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quantity Row -->
+                    <div class="ticket-row">
+                        <label class="ticket-lbl" for="order-qty">Contracts</label>
+                        <div class="ticket-input-wrap">
+                            <input type="number" id="order-qty" class="ticket-input mono" value="100" min="1" step="10">
+                            <span class="unit-suffix">QTY</span>
+                        </div>
+                    </div>
+
+                    <!-- Iceberg Slice (conditionally shown) -->
+                    <div class="ticket-row" id="iceberg-input-group" style="display:none;">
+                        <label class="ticket-lbl" for="iceberg-qty">Visible Slice</label>
+                        <div class="ticket-input-wrap">
+                            <input type="number" id="iceberg-qty" class="ticket-input mono" placeholder="Hidden Off" min="0" step="10">
+                            <span class="unit-suffix">SLICE</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick % Selection Pills -->
+                    <div class="pct-chips-row">
+                        <button type="button" class="pct-btn" data-pct="0.25">25%</button>
+                        <button type="button" class="pct-btn" data-pct="0.50">50%</button>
+                        <button type="button" class="pct-btn" data-pct="0.75">75%</button>
+                        <button type="button" class="pct-btn" data-pct="1.00">100%</button>
+                    </div>
+
+                    <!-- Self Trade Prevention (STP) -->
+                    <div class="ticket-row">
+                        <label class="ticket-lbl" for="stp-mode">STP Guard</label>
+                        <div class="ticket-input-wrap">
+                            <select id="stp-mode" class="ticket-select">
                                 <option value="NONE">None</option>
                                 <option value="CANCEL_TAKER">Cancel Taker</option>
                                 <option value="CANCEL_MAKER">Cancel Maker</option>
@@ -101,61 +274,31 @@
                         </div>
                     </div>
 
-                    <div class="input-cell" id="price-input-cell">
-                        <div class="label-row">
-                            <label for="order-price">Price</label>
-                            <span class="label-unit">USD</span>
-                        </div>
-                        <div class="stepper-wrap">
-                            <input type="number" id="order-price" class="recessed-input mono" value="195.00" step="0.05" min="0.01">
-                            <div class="stepper-btns">
-                                <button type="button" class="step-btn" id="step-price-up">▲</button>
-                                <button type="button" class="step-btn" id="step-price-down">▼</button>
-                            </div>
-                        </div>
+                    <!-- Order Summary Row -->
+                    <div class="summary-line">
+                        <span class="summary-lbl">Estimated Cost</span>
+                        <span class="summary-val mono" id="summary-order-value">$19,500.00 USD</span>
                     </div>
 
-                    <div class="form-grid-2">
-                        <div class="input-cell">
-                            <label for="order-qty">Quantity</label>
-                            <input type="number" id="order-qty" class="recessed-input mono" value="100" min="1" step="10">
-                        </div>
-                        <div class="input-cell">
-                            <label for="iceberg-qty">Iceberg</label>
-                            <input type="number" id="iceberg-qty" class="recessed-input mono" placeholder="Full" min="0" step="10">
-                        </div>
-                    </div>
-
-                    <div class="pct-btn-row">
-                        <button type="button" class="pct-pill" data-pct="0.25">25%</button>
-                        <button type="button" class="pct-pill" data-pct="0.50">50%</button>
-                        <button type="button" class="pct-pill" data-pct="0.75">75%</button>
-                        <button type="button" class="pct-pill" data-pct="1.00">100%</button>
-                    </div>
-
-                    <button type="submit" class="submit-action-btn buy-exec" id="execute-btn">
-                        <span>TRANSMIT BUY ORDER</span>
+                    <!-- Full-Width Robinhood Action Button -->
+                    <button type="submit" class="btn-transmit buy-mode" id="execute-btn">
+                        <span>Review Buy Order</span>
                     </button>
                 </form>
 
-                <!-- Active Working Orders Blotter -->
-                <div class="working-orders-box">
-                    <div class="working-header">
-                        <span>WORKING ORDERS (<span id="working-count">0</span>)</span>
-                    </div>
-                    <div class="working-orders-stream" id="working-orders-stream">
-                        <div class="empty-msg">No resting orders</div>
-                    </div>
+                <div class="ticket-footer">
+                    <span class="buying-power-lbl">Buying Power</span>
+                    <span class="buying-power-val mono">$100,000.00 Available</span>
                 </div>
-            </aside>
+            </div>
 
-            <!-- COLUMN 2: Level 2 Order Book Depth Ladder -->
-            <section class="slab-card orderbook-slab">
-                <div class="slab-header">
-                    <span class="slab-title">MARKET DEPTH (L2)</span>
-                    <div class="tick-wrap">
-                        <span class="tick-lbl">TICK:</span>
-                        <select id="select-tick-size" class="recessed-select mini">
+            <!-- Level 2 Depth & Market Tape Card -->
+            <div class="l2-depth-card">
+                <div class="l2-header">
+                    <span class="l2-title">Order Book (L2)</span>
+                    <div class="l2-tick-wrap">
+                        <span class="tick-label">Tick:</span>
+                        <select id="select-tick-size" class="tick-dropdown">
                             <option value="0.05">0.05</option>
                             <option value="0.10">0.10</option>
                             <option value="0.50">0.50</option>
@@ -164,113 +307,108 @@
                     </div>
                 </div>
 
-                <div class="ob-grid-head">
-                    <span>PRICE ($)</span>
-                    <span class="text-right">SIZE</span>
-                    <span class="text-right">ORDERS</span>
-                    <span class="text-right">TOTAL</span>
+                <div class="ob-col-heads">
+                    <span>Price (USD)</span>
+                    <span class="text-right">Size</span>
+                    <span class="text-right">Total</span>
                 </div>
 
-                <!-- Asks Stream (Red) -->
-                <div class="ladder-container asks-ladder" id="asks-ladder">
-                    <!-- Populated dynamically -->
-                </div>
+                <!-- Order Book Ladder -->
+                <div class="ob-ladder">
+                    <!-- Asks (Red) -->
+                    <div class="ob-side-container asks-container" id="asks-ladder"></div>
 
-                <!-- Spread Ribbon -->
-                <div class="spread-ribbon">
-                    <span class="spread-mid-val" id="mid-price-txt">$195.00</span>
-                    <span class="spread-stat-txt">Spread: <span id="spread-amount-txt">0.40</span></span>
-                </div>
-
-                <!-- Bids Stream (Mint Green) -->
-                <div class="ladder-container bids-ladder" id="bids-ladder">
-                    <!-- Populated dynamically -->
-                </div>
-            </section>
-
-            <!-- COLUMN 3: Technical Canvas & Execution Feed -->
-            <section class="slab-card visualization-slab">
-                <!-- Top Chart Area -->
-                <div class="chart-section">
-                    <div class="slab-header chart-head">
-                        <div class="chart-tab-strip">
-                            <button class="chart-pill-btn active" id="tab-chart-depth">Depth Curve</button>
-                            <button class="chart-pill-btn" id="tab-chart-candle">Candlestick (1m)</button>
+                    <!-- Spread Strip -->
+                    <div class="spread-strip">
+                        <div class="spread-price-lead">
+                            <span id="mid-price-txt" class="val-green mono">$195.00</span>
                         </div>
-                        <div class="chart-legend">
-                            <span class="leg-bid">■ Bids</span>
-                            <span class="leg-ask">■ Asks</span>
-                        </div>
+                        <span class="spread-diff-tag mono">Spread: <span id="spread-amount-txt">0.40</span></span>
                     </div>
-                    <div class="canvas-box">
-                        <canvas id="trading-canvas"></canvas>
-                    </div>
+
+                    <!-- Bids (Green) -->
+                    <div class="ob-side-container bids-container" id="bids-ladder"></div>
                 </div>
 
-                <!-- Bottom Blotter Area -->
-                <div class="blotter-section">
-                    <div class="slab-header blotter-head">
-                        <span class="slab-title">EXECUTION BLOTTER</span>
-                        <span class="slab-sub">FIFO MATCHES</span>
+                <!-- Market Tape -->
+                <div class="market-tape-wrap">
+                    <div class="tape-header">
+                        <span>Recent Market Trades</span>
+                        <span class="tape-sub mono">FIFO Tape</span>
                     </div>
-
-                    <div class="trades-grid-head">
-                        <span>TIME</span>
-                        <span>PRICE ($)</span>
-                        <span class="text-right">QTY</span>
-                        <span class="text-right">MAKER / TAKER</span>
+                    <div class="ob-col-heads" style="padding: 3px 12px;">
+                        <span>Price</span>
+                        <span class="text-right">Size</span>
+                        <span class="text-right">Time</span>
                     </div>
-
-                    <div class="trades-stream" id="trades-stream">
-                        <!-- Populated dynamically -->
-                    </div>
+                    <div class="trades-stream-body" id="trades-stream"></div>
                 </div>
-            </section>
-        </main>
+            </div>
+        </aside>
+    </main>
 
-        <!-- Footer Strip -->
-        <footer class="app-footer">
-            <div class="footer-left">
-                <span class="dot-live"></span>
-                <span>MATCHING ENGINE: <strong>HEALTHY (0.16µs AVG)</strong></span>
-                <span class="f-sep">•</span>
-                <span>SPSC RING BUFFER: <strong>1,048,576 SLOTS</strong></span>
-                <span class="f-sep">•</span>
-                <span>MEMORY POOL: <strong>65,536 PRE-ALLOCATED</strong></span>
-            </div>
-            <div class="footer-right">
-                <span>DETERMINISTIC FIFO ENFORCED</span>
-            </div>
-        </footer>
-    </div>
+    <!-- Bottom Status Telemetry Bar -->
+    <footer class="app-footer">
+        <div class="footer-left">
+            <span class="pulse-dot"></span>
+            <span>WebSocket: <strong>Connected</strong></span>
+            <span class="footer-sep">|</span>
+            <span>Engine: <strong>Ultra Low-Latency C++20 Limit Order Book</strong></span>
+            <span class="footer-sep">|</span>
+            <span>Ring Buffer: <strong>1,048,576 Slots (64B Cacheline Padded)</strong></span>
+            <span class="footer-sep">|</span>
+            <span>Object Pool: <strong>Zero GC Allocation</strong></span>
+        </div>
+        <div class="footer-right">
+            <span>FIX 4.2 PROTOCOL ENGINE ACTIVE</span>
+        </div>
+    </footer>
 
     <!-- Modals -->
     <div class="modal-backdrop" id="modal-fix">
-        <div class="modal-panel fix-panel">
-            <div class="modal-head">
-                <span>FIX 4.2 PROTOCOL WIRE LOG</span>
-                <button class="close-btn" id="close-modal-fix"></button>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <span class="modal-title">FIX 4.2 Protocol Wire Feed</span>
+                <button class="btn-close-modal" id="close-modal-fix">✕</button>
             </div>
-            <div class="fix-feed" id="fix-feed-body">
-                <div class="fix-row"><span class="f-tag">8=FIX.4.2</span>|<span class="f-tag">35=A</span>|<span class="f-tag">49=CLIENT</span>|<span class="f-tag">56=NEXUS</span>|10=000</div>
+            <div class="modal-body">
+                <div class="fix-stream-box" id="fix-feed-body">
+                    <div class="fix-row"><span class="fix-time">[INIT]</span> 8=FIX.4.2|35=A|49=CLIENT|56=NEXUS|98=0|108=30|10=000</div>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="modal-backdrop" id="modal-bench">
-        <div class="modal-panel">
-            <div class="modal-head">
-                <span>IN-BROWSER LATENCY PROFILER</span>
-                <button class="close-btn" id="close-modal-bench"></button>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <span class="modal-title">In-Browser Stress Benchmark (50,000 Orders)</span>
+                <button class="btn-close-modal" id="close-modal-bench">✕</button>
             </div>
             <div class="modal-body">
-                <p>Run 50,000 double-auction limit & market order matches in browser JavaScript.</p>
-                <button class="bench-trigger-btn" id="btn-start-benchmark">START BENCHMARK</button>
-                <div class="bench-grid" id="bench-stats-grid" style="display: none;">
-                    <div class="bg-cell"><span class="bg-lbl">THROUGHPUT</span><span class="bg-val glow-mint" id="b-tps">--</span></div>
-                    <div class="bg-cell"><span class="bg-lbl">AVG LATENCY</span><span class="bg-val" id="b-avg">--</span></div>
-                    <div class="bg-cell"><span class="bg-lbl">P50 LATENCY</span><span class="bg-val" id="b-p50">--</span></div>
-                    <div class="bg-cell"><span class="bg-lbl">P99 LATENCY</span><span class="bg-val glow-cyan" id="b-p99">--</span></div>
+                <p class="bench-desc">
+                    Executes <strong>50,000 double-auction limit & market orders</strong> sequentially through the in-browser matching engine to calculate real-time throughput and P50/P99 latency distribution.
+                </p>
+                <button class="btn-transmit buy-mode" id="btn-start-benchmark" style="margin-top:16px;">
+                    RUN 50,000 ORDER BENCHMARK
+                </button>
+                <div class="bench-stats-grid" id="bench-stats-grid" style="display:none;">
+                    <div class="bench-stat-card">
+                        <span class="bench-stat-lbl">Throughput</span>
+                        <span class="bench-stat-num mono val-green" id="b-tps">--</span>
+                    </div>
+                    <div class="bench-stat-card">
+                        <span class="bench-stat-lbl">Avg Latency</span>
+                        <span class="bench-stat-num mono" id="b-avg">--</span>
+                    </div>
+                    <div class="bench-stat-card">
+                        <span class="bench-stat-lbl">P50 Latency</span>
+                        <span class="bench-stat-num mono val-green" id="b-p50">--</span>
+                    </div>
+                    <div class="bench-stat-card">
+                        <span class="bench-stat-lbl">P99 Tail Latency</span>
+                        <span class="bench-stat-num mono val-accent" id="b-p99">--</span>
+                    </div>
                 </div>
             </div>
         </div>
