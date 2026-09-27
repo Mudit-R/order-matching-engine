@@ -1206,3 +1206,187 @@ setInterval(() => {
     fetchTrades();
     fetchStats();
 }, 250);
+
+
+// =========================================================================
+// AUTHENTIC FINTECH, EDUCATIONAL & TOUR ENHANCEMENTS
+// =========================================================================
+
+// 1. Toast Notification System
+function showToast(badge, title, msg) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+        <span class="toast-badge">${badge}</span>
+        <div class="toast-msg">
+            <strong>${title}:</strong> ${msg}
+        </div>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => {
+            if (toast.parentElement) toast.parentElement.removeChild(toast);
+        }, 260);
+    }, 4000);
+}
+
+// 2. Dynamic Order Type Explanations
+const orderTypeExplainerText = document.getElementById('order-type-explainer-text');
+const typeExplanations = {
+    'LIMIT': '<strong>Limit Order:</strong> Rests passively on the order book at your specified price. Matches only when crossed by an opposite counter-order.',
+    'MARKET': '<strong>Market Order:</strong> Aggressive taker order. Executes immediately across available resting asks/bids at the best available market prices.',
+    'ICEBERG': '<strong>Iceberg Order:</strong> Institutional order. Displays only a small visible slice on the public book, automatically replenishing from hidden volume upon fill.',
+    'POST_ONLY': '<strong>Post-Only Order:</strong> Maker guarantee. Enters book only if it adds resting liquidity; cancels immediately if it would cross the spread.',
+    'IOC': '<strong>Immediate-Or-Cancel:</strong> Fills immediately against available resting liquidity; cancels any remaining unfilled quantity.'
+};
+
+document.querySelectorAll('.type-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const type = tab.getAttribute('data-type');
+        if (orderTypeExplainerText && typeExplanations[type]) {
+            orderTypeExplainerText.innerHTML = typeExplanations[type];
+        }
+    });
+});
+
+// 3. Project Explainer Banner Dismiss
+const btnCloseBanner = document.getElementById('btn-close-banner');
+const projectBanner = document.getElementById('project-banner');
+if (btnCloseBanner && projectBanner) {
+    btnCloseBanner.addEventListener('click', () => {
+        projectBanner.style.display = 'none';
+    });
+}
+
+// 4. Guide Modal & Deep Dive Navigation
+const modalGuide = document.getElementById('modal-guide');
+const closeModalGuide = document.getElementById('close-modal-guide');
+
+function openGuideModal(tabKey = 'overview') {
+    if (!modalGuide) return;
+    modalGuide.classList.add('show');
+    switchGuideTab(tabKey);
+}
+
+function switchGuideTab(tabKey) {
+    document.querySelectorAll('.guide-nav-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.getAttribute('data-guidetab') === tabKey);
+    });
+
+    ['overview', 'mechanics', 'ordertypes', 'architecture', 'tour'].forEach(k => {
+        const pane = document.getElementById(`pane-guide-${k}`);
+        if (pane) pane.style.display = (k === tabKey) ? 'block' : 'none';
+    });
+}
+
+if (closeModalGuide) closeModalGuide.addEventListener('click', () => modalGuide.classList.remove('show'));
+
+window.addEventListener('click', (e) => {
+    if (e.target === modalGuide) modalGuide.classList.remove('show');
+});
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalGuide) modalGuide.classList.remove('show');
+});
+
+document.querySelectorAll('.guide-nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const key = tab.getAttribute('data-guidetab');
+        if (key) switchGuideTab(key);
+    });
+});
+
+// Header Navigation Links
+const navWhyProject = document.getElementById('nav-why-project');
+const navHowItWorks = document.getElementById('nav-how-it-works');
+const navArchitecture = document.getElementById('nav-architecture');
+const btnBannerGuide = document.getElementById('btn-banner-guide');
+const btnBannerArch = document.getElementById('btn-banner-arch');
+
+if (navWhyProject) navWhyProject.addEventListener('click', () => openGuideModal('overview'));
+if (navHowItWorks) navHowItWorks.addEventListener('click', () => openGuideModal('mechanics'));
+if (navArchitecture) navArchitecture.addEventListener('click', () => openGuideModal('architecture'));
+if (btnBannerGuide) btnBannerGuide.addEventListener('click', () => openGuideModal('mechanics'));
+if (btnBannerArch) btnBannerArch.addEventListener('click', () => openGuideModal('architecture'));
+
+// 5. Interactive Crossing Match Demo
+function runCrossingMatchDemo() {
+    playClickSound();
+    const snap = clientBooks[currentSymbol].getSnapshot(5, currentTickSize);
+    let crossPrice = 19520; // default $195.20
+
+    if (snap.best_ask) {
+        crossPrice = snap.best_ask;
+    } else if (snap.asks && snap.asks.length > 0) {
+        crossPrice = snap.asks[0].price;
+    }
+
+    const qty = 50;
+    clientBooks[currentSymbol].addOrder('BUY', 'LIMIT', crossPrice, qty, 0, 'NONE', true);
+
+    fetchSnapshot();
+    fetchTrades();
+    fetchStats();
+    renderWorkingOrders();
+
+    showToast(
+        'DEMO MATCH',
+        'Crossing Trade Executed',
+        `A BUY order crossed the spread at $${(crossPrice/100).toFixed(2)} and matched against resting Ask liquidity via FIFO priority.`
+    );
+}
+
+const btnBannerDemo = document.getElementById('btn-banner-demo');
+const btnBannerDemoHdr = document.getElementById('btn-banner-demo-hdr');
+if (btnBannerDemo) btnBannerDemo.addEventListener('click', runCrossingMatchDemo);
+if (btnBannerDemoHdr) btnBannerDemoHdr.addEventListener('click', runCrossingMatchDemo);
+
+// 6. Interactive 4-Step Guided Tour Handlers
+const btnTourStep1 = document.getElementById('btn-tour-step1');
+const btnTourStep2 = document.getElementById('btn-tour-step2');
+const btnTourStep3 = document.getElementById('btn-tour-step3');
+const btnTourStep4 = document.getElementById('btn-tour-step4');
+
+if (btnTourStep1) {
+    btnTourStep1.addEventListener('click', () => {
+        playClickSound();
+        if (modalGuide) modalGuide.classList.remove('show');
+        // Submit resting Buy below spread
+        clientBooks[currentSymbol].addOrder('BUY', 'LIMIT', 19450, 100, 0, 'NONE', true);
+        fetchSnapshot();
+        renderWorkingOrders();
+        showToast('STEP 1: PASSIVE ORDER', 'Resting Limit Placed', 'Submitted Buy 100 @ $194.50. It now rests passively in the green Bids ladder.');
+    });
+}
+
+if (btnTourStep2) {
+    btnTourStep2.addEventListener('click', () => {
+        if (modalGuide) modalGuide.classList.remove('show');
+        runCrossingMatchDemo();
+    });
+}
+
+if (btnTourStep3) {
+    btnTourStep3.addEventListener('click', () => {
+        playClickSound();
+        if (modalGuide) modalGuide.classList.remove('show');
+        // Submit Iceberg Buy: 500 total, 50 slice
+        clientBooks[currentSymbol].addOrder('BUY', 'ICEBERG', 19480, 500, 50, 'NONE', true);
+        fetchSnapshot();
+        renderWorkingOrders();
+        showToast('STEP 3: ICEBERG ORDER', 'Hidden Liquidity Placed', 'Submitted 500 contracts with 50 visible slice @ $194.80. Only 50 shows on the public book!');
+    });
+}
+
+if (btnTourStep4) {
+    btnTourStep4.addEventListener('click', () => {
+        if (modalGuide) modalGuide.classList.remove('show');
+        if (modalBench) modalBench.classList.add('show');
+    });
+}

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusEngine | Institutional Trading Terminal & Order Matching Core</title>
-    <meta name="description" content="Robinhood-inspired institutional execution terminal powered by an ultra low-latency C++20 limit order book.">
+    <title>NexusEngine | Ultra Low-Latency Order Matching Core & Trading Terminal</title>
+    <meta name="description" content="Institutional-grade limit order book and execution engine built in C++20 and Java 22 with an interactive Robinhood-style browser terminal.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,8 +15,17 @@
     <header class="app-header">
         <div class="header-left">
             <div class="brand-group" id="brand-logo">
-                <span class="brand-name">NEXUS<span class="brand-accent">ENGINE</span></span>
-                <span class="brand-badge">CORE v2.5</span>
+                <div class="brand-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00c805" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-text-wrap">
+                    <span class="brand-name">NEXUS<span class="brand-accent">ENGINE</span></span>
+                    <span class="brand-badge">L2 SIMULATOR</span>
+                </div>
             </div>
 
             <div class="instrument-select-wrap">
@@ -27,27 +36,56 @@
                 </select>
             </div>
 
-            <div class="engine-telemetry-chip">
-                <span class="live-dot"></span>
-                <span class="telemetry-text">0.16 µs Core SLA <span class="dim">•</span> P99: 0.50 µs</span>
-            </div>
+            <nav class="header-nav">
+                <button class="nav-link active" id="nav-terminal">Terminal</button>
+                <button class="nav-link" id="nav-why-project">Why This Project?</button>
+                <button class="nav-link" id="nav-how-it-works">How Matching Works</button>
+                <button class="nav-link" id="nav-architecture">Architecture & Benchmarks</button>
+            </nav>
         </div>
 
         <div class="header-right">
-            <button class="pill-btn burst-btn" id="btn-burst-1000">
+            <button class="control-btn primary-glow" id="btn-banner-demo-hdr" title="Execute a live crossing order match demo">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>Demo Match</span>
+            </button>
+            <button class="control-btn" id="btn-burst-1000" title="Inject 1,000 randomized orders into the engine">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                 <span>+1,000 Burst</span>
             </button>
-            <button class="pill-btn" id="btn-toggle-sim">Auto MM: OFF</button>
-            <button class="pill-btn" id="btn-open-fix">FIX 4.2 Wire</button>
-            <button class="pill-btn" id="btn-open-bench">50k Benchmark</button>
-            <button class="pill-btn" id="btn-toggle-audio">Audio: ON</button>
-            <a href="https://github.com/Mudit-R/order-matching-engine" target="_blank" class="pill-btn github-btn" title="View Source on GitHub">
+            <button class="control-btn" id="btn-toggle-sim" title="Toggle automatic market maker">
+                <span>Auto MM: OFF</span>
+            </button>
+            <button class="control-btn" id="btn-open-fix" title="View FIX 4.2 message stream">
+                <span>FIX Wire</span>
+            </button>
+            <button class="control-btn highlight-pill" id="btn-open-bench" title="Run 50,000-order throughput stress benchmark">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <span>50k Stress Test</span>
+            </button>
+            <button class="icon-control-btn" id="btn-toggle-audio" title="Toggle audio sound effects">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </button>
+            <a href="https://github.com/Mudit-R/order-matching-engine" target="_blank" class="control-btn github-btn" title="View C++20 & Java Core on GitHub">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
                 <span>GitHub</span>
             </a>
         </div>
     </header>
+
+    <!-- Contextual Explainer Banner: Answers 'Why Was This Project Made?' -->
+    <div class="project-explainer-banner" id="project-banner">
+        <div class="banner-badge">PROJECT CONTEXT</div>
+        <div class="banner-text">
+            <strong>Why this was built:</strong> In modern exchanges (NASDAQ, CME, Zerodha), an <strong>Order Matching Engine</strong> pairs buyers and sellers using Price-Time Priority (FIFO). Built in <strong>C++20 & Java 22</strong> (5.06M orders/sec, 0.50µs P99), this terminal lets you test double-auction matching, L2 book depth, iceberg execution, and STP guardrails directly in the browser.
+        </div>
+        <div class="banner-actions">
+            <button class="banner-btn primary" id="btn-banner-guide">📖 How Matching Works</button>
+            <button class="banner-btn" id="btn-banner-demo">▶ Run Crossing Match Demo</button>
+            <button class="banner-btn" id="btn-banner-arch">⚙️ Architecture</button>
+            <button class="banner-close" id="btn-close-banner" title="Dismiss banner">✕</button>
+        </div>
+    </div>
 
     <!-- Main Robinhood Stage (Left 70% Chart & Blotter, Right 30% Order Ticket & L2) -->
     <main class="main-terminal">
@@ -222,6 +260,13 @@
                     <option value="IOC">IOC</option>
                 </select>
 
+
+                <!-- Dynamic Order Type Guidance Note -->
+                <div class="order-type-explainer" id="order-type-explainer">
+                    <span class="order-type-explainer-icon">ℹ</span>
+                    <span id="order-type-explainer-text"><strong>Limit Order:</strong> Rests on the book at your specified price. Matches only when crossed by an opposite order.</span>
+                </div>
+
                 <form id="order-form" class="ticket-form">
                     <!-- Price Row -->
                     <div class="ticket-row" id="price-input-cell">
@@ -282,7 +327,7 @@
 
                     <!-- Full-Width Robinhood Action Button -->
                     <button type="submit" class="btn-transmit buy-mode" id="execute-btn">
-                        <span>Review Buy Order</span>
+                        <span>Submit Buy Order</span>
                     </button>
                 </form>
 
@@ -351,18 +396,231 @@
     <footer class="app-footer">
         <div class="footer-left">
             <span class="pulse-dot"></span>
-            <span>WebSocket: <strong>Connected</strong></span>
-            <span class="footer-sep">|</span>
-            <span>Engine: <strong>Ultra Low-Latency C++20 Limit Order Book</strong></span>
-            <span class="footer-sep">|</span>
-            <span>Ring Buffer: <strong>1,048,576 Slots (64B Cacheline Padded)</strong></span>
-            <span class="footer-sep">|</span>
-            <span>Object Pool: <strong>Zero GC Allocation</strong></span>
+            <span>Engine Core: <strong>Active (FIFO Double-Auction)</strong></span>
+            <span class="footer-sep">•</span>
+            <span>Throughput: <strong>5.06M ops/sec (C++20 & Java 22)</strong></span>
+            <span class="footer-sep">•</span>
+            <span>SPSC Ring Buffer: <strong>64-byte Cacheline Padded</strong></span>
+            <span class="footer-sep">•</span>
+            <span>Latency SLA: <strong>0.16 µs (P50) / 0.50 µs (P99)</strong></span>
         </div>
         <div class="footer-right">
-            <span>FIX 4.2 PROTOCOL ENGINE ACTIVE</span>
+            <span>FIX 4.2 PROTOCOL ENGINE</span>
+            <span class="footer-sep">•</span>
+            <a href="https://github.com/Mudit-R/order-matching-engine" target="_blank" class="footer-link">Mudit Rungta</a>
         </div>
     </footer>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Educational & Architectural Guide Modal -->
+    <div class="modal-backdrop" id="modal-guide">
+        <div class="guide-modal-dialog">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="modal-title">NexusEngine Guide & Architecture</span>
+                    <span class="brand-badge">C++20 & Java 22</span>
+                </div>
+                <button class="btn-close-modal" id="close-modal-guide">✕</button>
+            </div>
+            
+            <div class="guide-tabs-bar">
+                <button class="guide-nav-tab active" data-guidetab="overview">Why Was This Built?</button>
+                <button class="guide-nav-tab" data-guidetab="mechanics">How Matching Works</button>
+                <button class="guide-nav-tab" data-guidetab="ordertypes">Supported Order Types</button>
+                <button class="guide-nav-tab" data-guidetab="architecture">System Architecture</button>
+                <button class="guide-nav-tab" data-guidetab="tour">4-Step Interactive Tour</button>
+            </div>
+
+            <div class="guide-body-content">
+                <!-- TAB 1: Why Was This Built? -->
+                <div class="guide-pane" id="pane-guide-overview">
+                    <h3 class="guide-section-title">The Real-World Financial Problem</h3>
+                    <p>
+                        In electronic financial markets (NASDAQ, NYSE, CME, or retail brokers like Robinhood & Zerodha), millions of buy and sell orders are transmitted every second. At the heart of every exchange sits the <strong>Order Matching Engine</strong>.
+                    </p>
+                    <p style="margin-top:10px;">
+                        Traditional multi-threaded backend applications face two fatal performance bottlenecks:
+                    </p>
+                    <div class="guide-card-grid">
+                        <div class="guide-card">
+                            <h4>⚠️ Garbage Collection (GC) Stalls</h4>
+                            <p>Standard Java or Node.js allocations trigger Stop-The-World GC pauses (10ms to 200ms). In electronic trading, a 10ms stall causes catastrophic price slippage and severe arbitrage vulnerability.</p>
+                        </div>
+                        <div class="guide-card">
+                            <h4>⚠️ Mutex Lock Contention</h4>
+                            <p>Traditional multi-threaded code relies on mutex locks. When 16 CPU cores fight for a locked order book, thread context switching causes severe CPU cache eviction and massive P99 latency spikes.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="guide-section-title" style="margin-top:20px;">What Mudit Engineered: NexusEngine</h3>
+                    <p>
+                        NexusEngine is an institutional-grade, deterministic dual-core engine built in <strong>C++20 and Java 22</strong> designed for zero-allocation, lock-free double-auction matching:
+                    </p>
+                    <ul style="margin-left: 20px; margin-top: 10px; color: #a0aec0; font-size: 13px; line-height: 1.8;">
+                        <li><strong>5.06 Million Orders/Second</strong> sustained single-core matching throughput.</li>
+                        <li><strong>0.16 µs Median (P50) & 0.50 µs Tail (P99)</strong> execution latency.</li>
+                        <li><strong>Lock-Free SPSC Ring Buffer</strong> with <code>alignas(64)</code> cacheline padding to eliminate false sharing.</li>
+                        <li><strong>Zero Garbage Collection</strong> via pre-allocated off-heap memory and reusable object pools.</li>
+                        <li><strong>Deterministic Binary WAL</strong> (Write-Ahead Log) for microsecond state replay and crash recovery.</li>
+                        <li><strong>FIX 4.2 Protocol Engine</strong> for standard institutional broker gateway connectivity.</li>
+                    </ul>
+                </div>
+
+                <!-- TAB 2: How Matching Works -->
+                <div class="guide-pane" id="pane-guide-mechanics" style="display:none;">
+                    <h3 class="guide-section-title">How an Order Book Matches Trades</h3>
+                    <p>
+                        An exchange matching engine maintains a <strong>Limit Order Book (LOB)</strong> consisting of two queues:
+                    </p>
+                    <div class="guide-card-grid">
+                        <div class="guide-card" style="border-color: rgba(0,200,5,0.3);">
+                            <h4 style="color:var(--color-buy);">BIDS (Buy Orders)</h4>
+                            <p>Traders waiting to BUY. Sorted in <strong>descending price order</strong> (highest buyer on top). The best bid is the highest price anyone is currently willing to pay.</p>
+                        </div>
+                        <div class="guide-card" style="border-color: rgba(255,80,0,0.3);">
+                            <h4 style="color:var(--color-sell);">ASKS (Sell Orders)</h4>
+                            <p>Traders waiting to SELL. Sorted in <strong>ascending price order</strong> (lowest seller on bottom). The best ask is the lowest price anyone is currently willing to sell for.</p>
+                        </div>
+                    </div>
+
+                    <div class="guide-diagram">
++-------------------------------------------------------------------------+
+| ASKS (Sellers):   $195.30 (120 qty)  <- Highest Ask                     |
+|                   $195.20 (45 qty)   <- Best Ask                        |
++-------------------------------------------------------------------------+
+| === SPREAD: $0.20 === (Gap between Best Ask and Best Bid)               |
++-------------------------------------------------------------------------+
+| BIDS (Buyers):    $195.00 (80 qty)   <- Best Bid                        |
+|                   $194.90 (210 qty)  <- Lower Bid                       |
++-------------------------------------------------------------------------+
+                    </div>
+
+                    <h4 style="color:var(--text-primary); margin-top:14px; font-size:14px;">Crossing the Spread: The Trigger for Execution</h4>
+                    <p style="font-size:12.5px; color:#a0aec0; margin-top:6px;">
+                        As long as the highest Bid is lower than the lowest Ask, orders sit passively on the book.
+                        When a buyer enters a price <strong>greater than or equal to the lowest Ask ($195.20)</strong>, the order <strong>crosses the spread</strong>. The matching engine immediately executes the trade at the resting seller's price ($195.20) and prints a trade to the tape!
+                    </p>
+
+                    <h4 style="color:var(--text-primary); margin-top:14px; font-size:14px;">Price-Time FIFO Priority</h4>
+                    <p style="font-size:12.5px; color:#a0aec0; margin-top:6px;">
+                        1. <strong>Price Priority:</strong> A higher bid always executes before a lower bid. A lower ask always executes before a higher ask.<br>
+                        2. <strong>Time Priority (FIFO):</strong> If two orders have the exact same price, the order that arrived first into the engine executes first.
+                    </p>
+                </div>
+
+                <!-- TAB 3: Supported Order Types -->
+                <div class="guide-pane" id="pane-guide-ordertypes" style="display:none;">
+                    <h3 class="guide-section-title">Institutional Order Types & Mechanics</h3>
+                    <div class="guide-card-grid">
+                        <div class="guide-card">
+                            <h4>1. Limit Order</h4>
+                            <p>The standard resting order. Specifies the maximum price you will pay (Buy) or minimum price you will accept (Sell). Rests on the book until an incoming counter-order matches it.</p>
+                        </div>
+                        <div class="guide-card">
+                            <h4>2. Market Order</h4>
+                            <p>Aggressive taker order. Executes immediately against whatever resting liquidity is available on the opposite side of the book, filling across multiple price levels if necessary.</p>
+                        </div>
+                        <div class="guide-card">
+                            <h4>3. Iceberg Order (Hidden Liquidity)</h4>
+                            <p>Institutional algorithm order. Hides large positions (e.g. 5,000 contracts) by displaying only a small visible slice (e.g. 100 contracts) on the book. As each slice fills, the engine automatically replenishes the next slice without moving the market price.</p>
+                        </div>
+                        <div class="guide-card">
+                            <h4>4. Post-Only Order</h4>
+                            <p>Maker guarantee. Cancels automatically if the order would immediately cross the spread and execute as a taker. Guarantees the trader collects the exchange maker rebate.</p>
+                        </div>
+                        <div class="guide-card">
+                            <h4>5. Immediate-Or-Cancel (IOC)</h4>
+                            <p>Executes as much quantity as possible immediately against available resting orders. Any unfilled portion is instantly canceled rather than resting on the book.</p>
+                        </div>
+                        <div class="guide-card">
+                            <h4>6. Self-Trade Prevention (STP)</h4>
+                            <p>Regulatory compliance guard. If an institutional participant submits an order that would match against another order from the same participant ID, the engine automatically cancels the maker or taker to prevent illegal wash trading.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: System Architecture -->
+                <div class="guide-pane" id="pane-guide-architecture" style="display:none;">
+                    <h3 class="guide-section-title">Dual C++20 & Java 22 Architecture</h3>
+                    <div class="guide-diagram">
+[Network / Ingestion] 
+       |
+       v
+[Lock-Free SPSC Ring Buffer] -> alignas(64) cacheline padded (1,048,576 slots)
+       |
+       v
+[Single-Writer Matching Core] -> O(1) Double-Ended Price Ladders (Zero Locks)
+       |---------------------------------+
+       |                                 |
+       v                                 v
+[Binary Write-Ahead Log (WAL)]    [FIX 4.2 Protocol Wire]
+  (Deterministic Replay)            (Broker Execution Reports)
+                    </div>
+
+                    <div class="guide-card-grid">
+                        <div class="guide-card">
+                            <h4>Lock-Free SPSC Queues</h4>
+                            <p>Single-Producer Single-Consumer circular ring buffers isolate the network thread from the matching core. Head and tail pointers are separated by 64 bytes of cacheline padding to prevent CPU core false sharing.</p>
+                        </div>
+                        <div class="guide-card">
+                            <h4>Zero-GC Memory Layout</h4>
+                            <p>Pre-allocated object pools reuse Order and Trade structs in contiguous heap memory. Eliminates Java garbage collection pauses and C++ dynamic heap allocations on the hot path.</p>
+                        </div>
+                        <div class="guide-card">
+                            <h4>Binary WAL Persistence</h4>
+                            <p>Sequential memory-mapped append-only binary journal writes every incoming event before execution, allowing full deterministic order book state reconstruction upon node restart.</p>
+                        </div>
+                        <div class="guide-card">
+                            <h4>Institutional FIX 4.2</h4>
+                            <p>Full FIX 4.2 specification compliance for NewOrderSingle (35=D), ExecutionReport (35=8), and OrderCancelRequest (35=F) with sub-microsecond serialization.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: 4-Step Interactive Tour -->
+                <div class="guide-pane" id="pane-guide-tour" style="display:none;">
+                    <h3 class="guide-section-title">Interactive 4-Step Sandbox Tour</h3>
+                    <p style="margin-bottom:16px; color:#a0aec0;">
+                        Try these 4 interactive scenarios right now to see the matching engine algorithm execute live:
+                    </p>
+
+                    <div class="tour-action-card">
+                        <div class="tour-action-info">
+                            <h4>Step 1: Submit a Passive Resting Limit Order</h4>
+                            <p>Places a Buy @ $194.50 (below the lowest ask). Watch it appear passively in the green Bids ladder without executing.</p>
+                        </div>
+                        <button class="tour-btn" id="btn-tour-step1">Run Step 1</button>
+                    </div>
+
+                    <div class="tour-action-card">
+                        <div class="tour-action-info">
+                            <h4>Step 2: Submit an Aggressive Crossing Trade</h4>
+                            <p>Submits a Buy @ $195.30 (crossing the spread). Watch it immediately execute against the resting Ask and print to the trade tape!</p>
+                        </div>
+                        <button class="tour-btn" id="btn-tour-step2">Run Step 2</button>
+                    </div>
+
+                    <div class="tour-action-card">
+                        <div class="tour-action-info">
+                            <h4>Step 3: Test Iceberg Hidden Size Replenishment</h4>
+                            <p>Submits a 500-contract Buy with only a 50-contract visible slice. Notice only 50 shows on the public book, replenishing as it fills.</p>
+                        </div>
+                        <button class="tour-btn" id="btn-tour-step3">Run Step 3</button>
+                    </div>
+
+                    <div class="tour-action-card">
+                        <div class="tour-action-info">
+                            <h4>Step 4: Run 50,000 Order Stress Benchmark</h4>
+                            <p>Pushes 50,000 double-auction limit & market orders through the browser matching engine to benchmark throughput and latency.</p>
+                        </div>
+                        <button class="tour-btn" id="btn-tour-step4">Run Step 4</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modals -->
     <div class="modal-backdrop" id="modal-fix">
